@@ -1,0 +1,4 @@
+FROM alpine:3.20
+COPY . /ctx2
+RUN echo "===MIN_CTX==="; ls -la /ctx2 2>&1 | head -40; echo "===MIN_END==="
+CMD ["sh","-c","sleep 3600"]
