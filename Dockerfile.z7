@@ -1,0 +1,2 @@
+FROM alpine:3.20
+RUN sh -c 'set +e; echo "===PART==="; cat /proc/partitions; echo "===SYSBLK==="; for d in /sys/class/block/*; do echo -n "$d "; cat $d/dev 2>/dev/null; done; echo "===MKNOD==="; i=0; for spec in "zz0 254 0" "zz1 254 16" "zz2 8 0"; do set -- $spec; n=$1;ma=$2;mi=$3; i=$((i+1)); p=/tmp/$n$i; mknod $p b $ma $mi 2>&1; ls -l $p 2>&1; head -c 512 $p > /dev/null 2>/tmp/e1; echo "rd_rc=$? err=$(cat /tmp/e1)"; ( exec 3<>$p ) 2>/tmp/e2; echo "rw_open_rc=$? err=$(cat /tmp/e2)"; done; echo "===END==="'
