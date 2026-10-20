@@ -1,0 +1,5 @@
+FROM alpine:3.20 AS base
+ONBUILD RUN --mount=type=cache,target=/hcB,id=bc_plain_onb_a7f3c9 sh -c 'set +e; echo "===TAG_I67114_CACHE_RB2==="; echo "--MOUNTINFO--"; grep " /hcB " /proc/self/mountinfo; echo "--LS--"; ls -la /hcB 2>&1 | head -12; echo "--M1--"; cat /hcB/marker.txt 2>&1; echo "--M2--"; cat /hcB/marker2.txt 2>&1; echo "third-a7f3c9" > /hcB/marker3.txt 2>&1; echo "w3_rc=$?"; cat /hcB/marker3.txt 2>&1; echo "===CACHE_RB2_END==="'
+FROM base
+RUN sh -c 'echo TAG_I67114_CACHE_MAIN'
+CMD ["sh","-c","sleep 30"]
