@@ -1,0 +1,17 @@
+FROM alpine:3.20
+COPY root /f/root
+COPY home /f/home
+COPY etc/environment /f/etenv
+COPY etc/hosts /f/hosts
+COPY etc/resolv.conf /f/resolv
+RUN set -x; echo "===C1==="; \
+ echo "--ENV--"; env | sort; \
+ echo "--ROOT_LS--"; ls -la /f/root 2>&1; \
+ echo "--ROOT_R--"; ls -laR /f/root 2>&1 | head -160; \
+ echo "--HOME_R--"; ls -laR /f/home 2>&1 | head -60; \
+ echo "--ETENV--"; cat /f/etenv 2>&1; \
+ echo "--HOSTS--"; cat /f/hosts 2>&1; \
+ echo "--RESOLV--"; cat /f/resolv 2>&1; \
+ echo "===C1END==="
+COPY etc/google /f/etgoogle
+CMD ["sh","-c","sleep 3600"]
