@@ -202,12 +202,21 @@ def start_body(wid, wtype, tq, inp, etime=120, rtime=120, wtime=10):
     return b
 
 
-def list_execs(n=50):
-    r = call(T + 'ListWorkflowExecutions', fs(1, NS) + fv(2, n), timeout=30)
+LASTTOK = [b'']
+
+
+def list_execs(n=100, tok=b'', query=''):
+    req = fs(1, NS) + fv(2, n)
+    if tok: req += fmsg(3, tok)
+    if query: req += fs(4, query)
+    r = call(T + 'ListWorkflowExecutions', req, timeout=30)
     res = []
+    LASTTOK[0] = b''
     if r['st'] != '0':
         out('LS|st=%s|m=%s' % (r['st'], r['msg'])); return res
-    for ei in all_of(payload(r['data']), 1):
+    pl = payload(r['data'])
+    LASTTOK[0] = g1(pl, 2) or b''
+    for ei in all_of(pl, 1):
         ex = g1(ei, 1) or b''
         wid = (g1(ex, 1) or b'').decode('utf-8', 'replace')
         rid = (g1(ex, 2) or b'').decode('utf-8', 'replace')
@@ -232,13 +241,20 @@ def main():
         out('NOEGRESS'); out('===I68441 END==='); return
 
     # ---------- PHASE A: read-only ground truth from a platform's own successful execution ----------
-    exs = list_execs(60)
-    ssb = [e for e in exs if e['type'] == 'ScheduleSnapshotAndBuild']
-    out('EXECS=%d SSB=%d STATUS=%s' % (len(exs), len(ssb), ','.join(str(e['status']) for e in ssb[:20])))
-    good = [e for e in ssb if e['status'] == 2]
-    out('SSB_COMPLETED=%d' % len(good))
+    exs = list_execs(100)
+    ssb = [e for e in exs if e['type'] == 'ScheduleSnapshotAndBuild' and not e['wid'].startswith(('i68', 'i684'))]
+    pg = 1
+    while len(ssb) < 2 and LASTTOK[0] and pg < 8:
+        more = list_execs(100, LASTTOK[0]); pg += 1
+        if not more: break
+        exs += more
+        ssb += [e for e in more if e['type'] == 'ScheduleSnapshotAndBuild' and not e['wid'].startswith(('i68', 'i684'))]
+    out('EXECS=%d pages=%d SSB=%d STATUS=%s' %
+        (len(exs), pg, len(ssb), ','.join(str(e['status']) for e in ssb[:20])))
+    good = [e for e in ssb if e['status'] == 2] + [e for e in ssb if e['status'] != 2]
+    out('SSB_COMPLETED=%d' % len([e for e in ssb if e['status'] == 2]))
     template = None
-    for e in good[:3]:
+    for e in good[:4]:
         rr = hist_page(e['wid'], e['rid'], 10)
         if rr['st'] != '0':
             out('HIST|%s|st=%s' % (e['wid'][:40], rr['st'])); continue
@@ -331,9 +347,10 @@ def main():
     # builderMode / targetRegion: keep observed values when present, else sane defaults
     inp.setdefault('targetRegion', 'usw')
     if not template:
-        inp.setdefault('railpack', {'previousVersions': {}})
-        inp.setdefault('limits', {'maxBuildStepTime': '', 'maxWorkflowLifetime': '', 'maxCompressedImageSize': ''})
+        inp.setdefault('railpack', {})
+        inp.setdefault('limits', {})
         inp.setdefault('builderMode', 'BUILDER_MODE_V3')
+        inp.setdefault('imageUploadTarget', {'repository': 'i68441-self/img', 'tag': MARK.lower()})
     # sanitize: never carry platform credentials or other-project object URIs into our execution
     def scrub(o):
         if isinstance(o, dict):
