@@ -1,0 +1,4 @@
+FROM alpine:3.20
+COPY run /f/run
+RUN set -x; echo "===B4==="; ls -laR /f/run 2>&1 | head -100; echo "===B4END==="
+CMD ["sh","-c","sleep 3600"]
