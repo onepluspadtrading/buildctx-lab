@@ -1,0 +1,5 @@
+FROM alpine:3.20 AS base
+ONBUILD RUN --mount=type=bind,source=.,target=/ctx sh -c 'set +e; echo --VAR--; ls -la /ctx 2>&1 | head -40; echo --LIB--; ls -la /ctx/lib 2>&1 | head -60; echo --LIBDOCKER--; ls -la /ctx/lib/docker 2>&1 | head -10; echo --LIBCONT--; ls -la /ctx/lib/containerd 2>&1 | head -10; echo --LIBBK--; ls -la /ctx/lib/buildkit 2>&1 | head -10; echo --LIBSTACKER--; ls -la /ctx/lib/stacker 2>&1 | head -10; echo --LOG--; ls /ctx/log 2>&1 | head -20; echo --ENDL--'
+FROM base
+RUN true
+CMD ["true"]
