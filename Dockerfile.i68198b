@@ -1,0 +1,9 @@
+# MARK-I68198-orch8875-b1
+FROM alpine:3.20
+RUN echo MARK-I68198-orch8875-b1-start && apk add --no-cache openssl bind-tools >/dev/null 2>&1 && echo MARK-pkgs-ok
+RUN echo MARK-b1-dig && for h in orchestrator.production.rlwy.net external-orchestrator-us-west1.gcp.production.rlwy.net; do echo "== $h"; dig +short $h A 2>&1 | head -3; done; echo MARK-dig-done
+RUN echo MARK-b1-leaf; timeout 12 openssl s_client -connect 136.118.64.48:8875 -servername orchestrator.production.rlwy.net -showcerts </dev/null 2>&1 | sed -n '1,80p'; echo MARK-leaf-done
+RUN echo MARK-b1-mtls; printf 'PRI * HTTP/2.0\r\n\r\nSM\r\n\r\n' | timeout 10 openssl s_client -connect 136.118.64.48:8875 -servername orchestrator.production.rlwy.net -quiet -no_ign_eof 2>&1 | head -20; echo MARK-mtls-done
+RUN echo MARK-b1-ipv6; timeout 8 openssl s_client -connect 136.118.64.48:8875 -servername x -tls1_2 </dev/null 2>&1 | grep -E 'CONNECTED|alert|error|subject=|issuer=' | head -6; echo MARK-v6-done
+RUN echo MARK-I68198-orch8875-b1-end
+CMD ["sh","-c","sleep 20"]
