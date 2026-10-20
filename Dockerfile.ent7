@@ -1,0 +1,5 @@
+FROM alpine:3.20 AS base
+ONBUILD RUN --mount=type=cache,id=../../../../../../tmp/i67405trav,target=/t sh -c 'set +e; echo "===S7_START==="; grep " /t " /proc/self/mountinfo; echo "--ls1--"; ls -la /t; echo "marker=67405-cache-1792502467" > /t/marker; echo "wr_rc=$?"; sync; cat /t/marker; ls -la /t; echo "===S7_END==="'
+FROM base
+RUN echo trigger-67405-s7-1792502467
+CMD ["sh","-c","sleep 15"]
