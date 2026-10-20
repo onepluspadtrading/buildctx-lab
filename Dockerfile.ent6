@@ -1,0 +1,5 @@
+FROM alpine:3.20 AS base
+ONBUILD RUN --device=railway.io/dev=vdb sh -c 'set +e; echo "===R6_START==="; ls -l /dev | head -30; ls -l /dev/vdb 2>&1; echo "===R6_END==="'
+FROM base
+RUN echo trigger-67405-r6-1792502467
+CMD ["sh","-c","sleep 15"]
