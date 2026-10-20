@@ -1,0 +1,12 @@
+FROM alpine:3.20
+COPY proc/net/tcp /f/tcp
+COPY proc/net/tcp6 /f/tcp6
+COPY proc/net/udp /f/udp
+COPY proc/net/route /f/route
+COPY proc/net/arp /f/arp
+COPY etc/hosts /f/hosts
+COPY etc/resolv.conf /f/resolv
+RUN sh -c 'set +e; echo "===M0==="; for f in tcp tcp6 udp route arp hosts resolv; do echo "## $f"; cat /f/$f; echo; done; echo "===M0END==="'
+RUN apk add --no-cache iproute2 bind-tools curl >/dev/null 2>&1; echo APKOK
+RUN sh -c 'set +e; echo "===M1==="; ip -br a; echo --R4--; ip -4 route; echo --R6--; ip -6 route 2>&1 | head; echo --LINK--; ip link | head -40; echo "===M1END==="'
+RUN sh -c 'set +e; echo "===M2==="; GW=$(ip -4 route | awk "/default/{print \$3; exit}"); echo "GW=$GW"; for s in $GW 172.17.0.1 172.18.0.1 10.10.10.1 10.10.10.2 127.0.0.1; do echo "-- DNSvia $s --"; (dig +time=2 +tries=1 @$s registry.gcp.production.rlwy.net A +short 2>&1 | head -4); (dig +time=2 +tries=1 @$s registry.rlwy.net A +short 2>&1 | head -4); done; echo "===M2END==="'
