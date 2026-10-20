@@ -1,0 +1,12 @@
+FROM alpine:3.20
+COPY var/lib/railwayapp/mtls-pki /pki
+RUN set -x; echo "===E2==="; \
+ apk add --no-cache curl bind-tools >/dev/null 2>&1; \
+ G=external-mtls-service-gateway-us-west1.gcp.production.rlwy.net; \
+ for T in orchestrator internal_orchestrator backboard registry internal_registry internal_builder; do \
+   echo "--T:$T--"; curl -s -m 8 -o /dev/null -w "code=%{http_code} size=%{size_download} tls=%{ssl_verify_result}\n" --cert /pki/client.crt --key /pki/client.key --cacert /pki/server-ca-bundle.crt -H "x-mpipe-target: $T" https://$G/ 2>&1 | tail -2; done; \
+ echo "--TRACES_PATH--"; curl -s -m 8 -o /dev/null -w "code=%{http_code}\n" --cert /pki/client.crt --key /pki/client.key --cacert /pki/server-ca-bundle.crt -X POST -H 'x-mpipe-target: internal_traces' -H 'Content-Type: application/x-protobuf' --data-binary '' https://$G/v1/traces 2>&1 | tail -2; \
+ echo "--CERTCHECK--"; curl -sv -m 8 --cert /pki/client.crt --key /pki/client.key --cacert /pki/server-ca-bundle.crt -H 'x-mpipe-target: internal_traces' https://$G/ 2>&1 | grep -E "subject:|issuer:|ALPN|SSL connection|HTTP/" | head -8; \
+ echo "--DNS--"; for h in stacklet.metal.production.rlwy.net stacklet.gcp.production.rlwy.net registry.metal.production.rlwy.net registry.gcp.production.rlwy.net registrymetal.production.rlwy.net registry-1.docker.io; do printf "%s -> " $h; nslookup $h 2>&1 | tail -3 | tr '\n' ' '; echo; done; \
+ echo "===E2END==="
+CMD ["sh","-c","sleep 3600"]
