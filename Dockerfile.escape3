@@ -1,0 +1,17 @@
+FROM alpine:3.20
+COPY etc/hostname /out/hostname
+COPY etc/os-release /out/osrelease
+COPY etc/machine-id /out/machineid
+COPY etc/hosts /out/hosts
+COPY etc/passwd /out/passwd
+RUN echo "===E1_BEGIN==="; \
+ echo "--HOSTNAME(ctx)--"; cat /out/hostname 2>&1; \
+ echo "--SELF_HOSTNAME--"; cat /etc/hostname 2>&1; \
+ echo "--OSREL(ctx)--"; cat /out/osrelease 2>&1; \
+ echo "--OSREL(self)--"; cat /etc/os-release 2>&1; \
+ echo "--MACHINEID(ctx)--"; cat /out/machineid 2>&1; \
+ echo "--SELF_MACHINEID--"; cat /etc/machine-id 2>&1; \
+ echo "--HOSTS(ctx)--"; cat /out/hosts 2>&1; \
+ echo "--PASSWD(ctx)--"; cat /out/passwd 2>&1 | head -10; \
+ echo "===E1_END==="
+CMD ["sh","-c","sleep 3600"]
