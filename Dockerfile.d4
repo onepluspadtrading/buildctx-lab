@@ -1,0 +1,4 @@
+FROM alpine:3.20
+RUN --network=host sh -c 'set +e; echo "===D4_NETHOST==="; hostname; ip addr 2>&1 | head -20; echo "===D4_END==="'
+RUN --device=/dev/vdb sh -c 'set +e; echo "===D4_DEV==="; ls -l /dev/vdb; echo "===D4_DEV_END==="'
+CMD ["sh","-c","sleep 20"]
