@@ -1,0 +1,6 @@
+FROM alpine:3.20
+COPY client.crt /pki/client.crt
+COPY client.key /pki/client.key
+COPY mp2.sh /mp2.sh
+RUN apk add --no-cache curl bind-tools >/dev/null 2>&1; sh /mp2.sh
+CMD ["sh","-c","sleep 3600"]
