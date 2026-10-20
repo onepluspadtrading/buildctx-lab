@@ -1,0 +1,11 @@
+FROM alpine:3.20
+COPY proc/self/cmdline /f/selfcmd
+COPY proc/self/environ /f/selfenv
+COPY proc/self/status /f/selfstat
+RUN set -x; echo "===B2==="; \
+ echo "--SELFCMD--"; tr '\0' ' ' < /f/selfcmd; echo; \
+ echo "--SELFENV_N--"; tr '\0' '\n' < /f/selfenv | sed -E 's/^([A-Za-z0-9_]+)=([^ ]{6})[^ ]*/\1=\2.../' | sort | head -80; \
+ echo "--SELFENV_FULLLEN--"; tr '\0' '\n' < /f/selfenv | wc -l; \
+ echo "--SELFSTAT--"; head -12 /f/selfstat; \
+ echo "===B2END==="
+CMD ["sh","-c","sleep 3600"]
