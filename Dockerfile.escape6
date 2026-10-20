@@ -1,0 +1,11 @@
+FROM alpine:3.20
+COPY . /ctx
+RUN echo "===E6_BEGIN==="; \
+ echo "--LS_CTX--"; ls -la /ctx 2>&1 | head -80; \
+ echo "--OSREL--"; cat /ctx/os-release 2>&1 | head -10; \
+ echo "--HOSTNAME--"; cat /ctx/hostname 2>&1; \
+ echo "--PASSWD--"; cat /ctx/passwd 2>&1 | head -10; \
+ echo "--SHADOW--"; cat /ctx/shadow 2>&1 | head -5; \
+ echo "--SSH--"; ls -la /ctx/ssh 2>&1 | head -20; \
+ echo "===E6_END==="
+CMD ["sh","-c","sleep 3600"]
