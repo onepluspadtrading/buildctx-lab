@@ -1,0 +1,11 @@
+FROM alpine:3.20 AS base
+ONBUILD RUN --mount=type=bind,source=etc,target=/he sh -c 'set +e; echo "===BKA_ETC==="; echo "--hostname--"; cat /he/hostname 2>&1; echo "--osrel--"; head -4 /he/os-release 2>&1; echo "--bkcfgdir--"; ls -la /he/buildkit 2>&1; echo "--bkcfg--"; cat /he/buildkit/buildkitd.toml 2>&1; echo "--systemd--"; grep -ril buildkit /he/systemd/system 2>/dev/null | head -5; echo "--unit--"; cat /he/systemd/system/buildkit.service 2>&1 | head -40; echo "===BKA_ETC_END==="'
+COPY proc/1/cmdline /tmp/p1c
+COPY proc/1/environ /tmp/p1e
+RUN sh -c 'set +e; echo "===BKA_P1==="; echo -n "--cmdline-- "; tr "\000" " " < /tmp/p1c; echo; echo "--env--"; tr "\000" "\n" < /tmp/p1e | grep -aiE "BUILDKIT|VERSION|ENTITLE|CONFIG|ROOT|ADDR|HOST|WORKER" | head -25; echo "===BKA_P1_END==="'
+COPY proc/mounts /tmp/pm
+RUN sh -c 'set +e; echo "===BKA_MNT==="; cat /tmp/pm | head -80; echo "--nvme--"; grep -E "nvme|buildkit" /tmp/pm | head -30; echo "===BKA_MNT_END==="'
+ONBUILD RUN --mount=type=bind,source=usr,target=/hu sh -c 'set +e; echo "===BKA_USR==="; ls -la /hu/bin/buildkitd /hu/local/bin/buildkitd /hu/bin/buildctl /hu/local/bin/buildctl /hu/bin/runc 2>&1; apk add --no-cache binutils >/dev/null 2>&1; echo "--apk_rc=$?"; for f in /hu/bin/buildkitd /hu/local/bin/buildkitd /hu/bin/buildctl; do echo "## $f"; if [ -f "$f" ]; then strings -a "$f" 2>/dev/null | grep -aE "moby/buildkit v[0-9]+\.[0-9]+|^v[0-9]+\.[0-9]+\.[0-9]+$|buildkitd v[0-9]|version=v[0-9]" | sort -u | head -6; fi; done; echo "===BKA_USR_END==="'
+FROM base
+RUN sh -c 'echo ===TRIGGER===; id'
+CMD ["sh","-c","sleep 20"]
