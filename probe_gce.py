@@ -251,5 +251,7 @@ else:
     p('NO_TOKEN')
 
 p('=== END ===')
+import os as _os
+_os.makedirs('/o', exist_ok=True)
 with open('/o/summary.txt', 'w') as f:
     f.write('\n'.join(OUT))
