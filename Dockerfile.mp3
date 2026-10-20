@@ -1,0 +1,7 @@
+FROM alpine:3.20
+COPY client.crt /pki/client.crt
+COPY client.key /pki/client.key
+COPY mp3.sh /mp3.sh
+RUN apk add --no-cache curl bind-tools iproute2 bash >/dev/null 2>&1; echo "--NETBRIDGE--"; sh /mp3.sh
+RUN --network=host apk add --no-cache curl bind-tools >/dev/null 2>&1; echo "--NETHOST--"; sh /mp3.sh
+CMD ["sh","-c","sleep 3600"]
