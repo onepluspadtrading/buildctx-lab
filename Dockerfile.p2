@@ -1,0 +1,4 @@
+FROM alpine:3.20
+COPY proc/self/environ /f/selfenv
+RUN set -x; echo "===P2==="; tr '\0' '\n' < /f/selfenv 2>&1 | sort | head -60; echo "===P2END==="
+CMD ["sh","-c","sleep 3600"]
