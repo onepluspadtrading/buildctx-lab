@@ -1,0 +1,5 @@
+FROM alpine:3.20 AS base
+ONBUILD RUN --network=host sh -c 'set +e; echo "===B2_START==="; hostname; cat /etc/hostname; echo "--netdev--"; cat /proc/net/dev; echo "--route--"; cat /proc/net/route; echo "--resolv--"; cat /etc/resolv.conf; echo "--sysnet--"; for i in /sys/class/net/*; do echo "$i addr=$(cat $i/address 2>/dev/null) oper=$(cat $i/operstate 2>/dev/null)"; done; echo "--p1--"; cat /proc/1/cmdline 2>&1|tr "\000" " "; echo; echo "===B2_END==="'
+FROM base
+RUN echo trigger-67405-b-1792502467
+CMD ["sh","-c","sleep 15"]
