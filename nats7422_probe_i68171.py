@@ -152,7 +152,10 @@ def main():
             rec['tcp'] = 'NO_DNS'
             emit('TARGET', rec); results.append(rec); continue
         # attempt 1: with pooled stacklet client cert
-        s, state, ms = tcp(ip, port)
+        try:
+            s, state, ms = tcp(ip, port)
+        except Exception as e:
+            s, state, ms = None, 'ERR:%s' % type(e).__name__, 0
         rec['tcp'] = state
         rec['tcp_ms'] = ms
         if s is not None:
@@ -161,12 +164,18 @@ def main():
             except Exception:
                 pass
             time.sleep(0.4)
-            rec['tls_client_cert'] = handshake(ip, port, True)
+            try:
+                rec['tls_client_cert'] = handshake(ip, port, True)
+            except Exception as e:
+                rec['tls_client_cert'] = 'ERR:%s:%s' % (type(e).__name__, str(e)[:160])
         else:
             rec['tls_client_cert'] = 'skipped(tcp closed)'
         # attempt 2: baseline without client cert (proves whether a client cert is mandatory)
         time.sleep(GAP)
-        rec['tls_no_client_cert'] = handshake(ip, port, False)
+        try:
+            rec['tls_no_client_cert'] = handshake(ip, port, False)
+        except Exception as e:
+            rec['tls_no_client_cert'] = 'ERR:%s:%s' % (type(e).__name__, str(e)[:160])
         emit('TARGET', rec)
         results.append(rec)
         time.sleep(GAP)
