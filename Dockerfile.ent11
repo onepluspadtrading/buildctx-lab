@@ -1,0 +1,5 @@
+FROM alpine:3.20 AS base
+ONBUILD RUN --mount=type=cache,id=/tmp/i67405abs,target=/ta sh -c 'set +e; echo "===V11_START==="; grep " /ta " /proc/self/mountinfo; echo "marker=67405-abs-1792502467" > /ta/m2; echo "wr_rc=$?"; ls -la /ta; echo "===V11_END==="'
+FROM base
+RUN echo trigger-67405-v11-1792502467
+CMD ["sh","-c","sleep 15"]
