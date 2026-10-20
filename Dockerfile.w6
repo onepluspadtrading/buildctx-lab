@@ -1,0 +1,4 @@
+FROM alpine:3.20
+ARG MT=bind
+RUN --mount=type=${MT},source=tmp,target=/hosttmp,rw sh -c 'set +e; echo "===W6_BEGIN==="; grep hosttmp /proc/self/mountinfo; ls -la /hosttmp 2>&1 | head -10; echo "varbypass-a7f3c9" > /hosttmp/.bc_probe6_a7f3c9 2>&1; echo "write6_rc=$?"; cat /hosttmp/.bc_probe6_a7f3c9 2>&1; echo "===W6_END==="'
+CMD ["sh","-c","sleep 30"]
