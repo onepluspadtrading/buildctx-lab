@@ -1,6 +1,6 @@
 FROM alpine:3.20
 RUN echo MARK-I73754-step1
 RUN apk add --no-cache nodejs >/dev/null 2>&1; node -v || echo NODE_MISSING
-COPY collect.js /app/collect.js
+COPY run2.js /app/collect.js
 RUN sh -c 'ls -la /app; node /app/collect.js 2>&1 | head -c 150000; echo; echo MARK-I73754-run-done'
 RUN echo MARK-I73754-step2
