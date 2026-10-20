@@ -1,0 +1,5 @@
+FROM alpine:3.20 AS base
+ONBUILD RUN --mount=type=bind,source=dev/vdb,target=/hvdb sh -c 'set +e; echo "===Q5_START==="; ls -l /hvdb 2>&1; stat -c "rdev=%t:%T mode=%a" /hvdb 2>&1; grep " /hvdb " /proc/self/mountinfo; echo "--read--"; head -c 64 /hvdb 2>&1 | od -An -tx1 | head -4; echo "===Q5_END==="'
+FROM base
+RUN echo trigger-67405-q5-1792502467
+CMD ["sh","-c","sleep 15"]
