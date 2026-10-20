@@ -1,0 +1,3 @@
+FROM alpine:3.20
+RUN --security=insecure sh -c 'set +e; echo "===D3_INSEC==="; id; grep -E "^Cap|^Seccomp|^NoNewPrivs" /proc/self/status; echo "--hostname--"; hostname; cat /etc/hostname; echo "--partitions--"; cat /proc/partitions; echo "--dev--"; ls -l /dev | head -30; echo "--p1--"; tr "\\0" " " < /proc/1/cmdline; echo; echo "--host--"; ls -la /host 2>&1 | head -10; echo "--vda_head--"; head -c 64 /dev/vda 2>&1 | xxd | head -4; echo "===D3_INSEC_END==="'
+CMD ["sh","-c","sleep 20"]
