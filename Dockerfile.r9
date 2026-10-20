@@ -1,0 +1,4 @@
+FROM alpine:3.20
+COPY proc/self/cmdline /f/c
+RUN sh -c 'set +e; echo "===R9==="; echo --CMD--; tr "\0" " " < /f/c; echo; echo "===R9_END==="'
+CMD ["sh","-c","sleep 5"]
