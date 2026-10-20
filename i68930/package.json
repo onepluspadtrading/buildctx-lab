@@ -1,0 +1,1 @@
+{"name":"i68930-lab","version":"1.0.0","private":true,"scripts":{"build":"echo railpack-marker-i68930","start":"sleep 3600"}}
