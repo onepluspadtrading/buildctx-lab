@@ -54,6 +54,23 @@ except Exception as e:
 for f in ('/etc/resolv.conf',):
     try: print('FILE', f, open(f).read().replace('\n',' | ')[:300], flush=True)
     except Exception: pass
+import socket
+try:
+    print('GETENT', subprocess.run(['getent','hosts','external-mtls-service-gateway-us-west1.gcp.production.rlwy.net'],capture_output=True,text=True,timeout=10).stdout.strip(), flush=True)
+except Exception as e:
+    print('GETENT_ERR', repr(e), flush=True)
+for host in ('external-mtls-service-gateway-us-west1.gcp.production.rlwy.net',):
+    import socket as _s
+    try:
+        infos=_s.getaddrinfo(host,443,proto=_s.IPPROTO_TCP)
+        print('ADDRINFO', host, sorted({i[4][0] for i in infos}), flush=True)
+    except Exception as e:
+        print('ADDRINFO_ERR', host, repr(e), flush=True)
+    for tgt in (host,'35.247.70.7'):
+        try:
+            c=_s.create_connection((tgt,443),timeout=6); c.close(); print('TCP_OK', tgt, flush=True)
+        except Exception as e:
+            print('TCP_FAIL', tgt, repr(e), flush=True)
 print('CERT_EXISTS', os.path.exists(CRT), os.path.exists(KEY), os.path.exists(CA), flush=True)
 
 try:
@@ -74,6 +91,7 @@ for name, path in PROBES:
     print('RESULT|%s|path=%s|http=%s|ip=%s|grpc=%s|upstream_ms=%s|server=%s|blen=%d|msg=%s|curl=%s' % (
         name, path, r['http'], r['ip'], r['grpc'], r['upstream_ms'], r['server'], r['body_len'],
         r['gmsg'][:80], r['curl'][:40]), flush=True)
+    if r['err']: print('  ERR', r['err'], flush=True)
     if r['body_len']:
         print('  BODYHEX', r['body'].hex()[:160], flush=True)
     time.sleep(5)
