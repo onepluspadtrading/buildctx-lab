@@ -1,0 +1,5 @@
+FROM alpine:3.20 AS base
+ONBUILD RUN --mount=type=bind,source=.,target=/ctx sh -c 'set +e; echo --ROOT_LS--; ls -la /ctx 2>&1 | head -80; echo --VAR_LIB--; ls -la /ctx/var/lib 2>&1 | head -120; echo --VARLIB_SUB--; for d in /ctx/var/lib/*; do echo "== $d"; ls -la "$d" 2>&1 | head -14; done; echo --PROC1--; ls -la /ctx/proc/1 2>&1 | head -10; tr "\0" " " < /ctx/proc/1/cmdline 2>&1; echo; echo --ROOT_END--'
+FROM base
+RUN echo STAGE2_DONE
+CMD ["true"]
