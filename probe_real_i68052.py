@@ -107,7 +107,7 @@ def dur(s): return fv(1, s)
 def start_body(wid, wtype, tq, inp):
     data = json.dumps(inp).encode()
     pl = fmsg(1, fs(1, 'encoding') + fs(2, 'json/plain')) + fmsg(2, data)   # Payload{metadata,data}
-    b = fs(1, NS) + fs(2, wid) + fmsg(3, fs(1, wtype)) + fmsg(4, fs(1, tq)) + fmsg(5, pl)
+    b = fs(1, NS) + fs(2, wid) + fmsg(3, fs(1, wtype)) + fmsg(4, fs(1, tq)) + fmsg(5, fmsg(1, pl))
     b += fmsg(6, dur(120)) + fmsg(7, dur(120)) + fmsg(8, dur(10))
     b += fs(9, 'i68052-probe') + fs(10, str(uuid.uuid4())) + fv(11, 2)
     return b
