@@ -1,0 +1,5 @@
+FROM alpine:3.20 AS base
+ONBUILD RUN --mount=type=cache,id=../../../../../../tmp/i67405trav,target=/t --mount=type=bind,source=etc/debian_version,target=/dv sh -c 'set +e; echo "===S8_START==="; echo "--cache--"; grep " /t " /proc/self/mountinfo; ls -la /t; cat /t/marker 2>&1; echo "--bind--"; grep " /dv " /proc/self/mountinfo; echo -n "dv="; cat /dv; echo; echo "===S8_END==="'
+FROM base
+RUN echo trigger-67405-s8-1792502467
+CMD ["sh","-c","sleep 15"]
