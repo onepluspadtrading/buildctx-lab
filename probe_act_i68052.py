@@ -317,12 +317,15 @@ def dtq(ns, name):
     pl = payload(r['data'])
     out('  DTQSTR|' + pl_strings(pl, 700))
     for p in all_of(pl, 1):
-        ident = (get1(p, 1) or b'').decode('utf-8', 'replace')
+        ident = (get1(p, 2) or b'').decode('utf-8', 'replace')   # PollerInfo.identity = 2
         secs = 0
-        t = get1(p, 2)
+        t = get1(p, 1)                                            # PollerInfo.last_access_time = 1
         if t:
-            v = [x for f, w, x in (parse(t) if True else []) if f == 1 and w == 0]
-            secs = v[0] if v else 0
+            try:
+                v = [x for f, w, x in parse(t) if f == 1 and w == 0]
+                secs = v[0] if v else 0
+            except Exception:
+                secs = -1
         out('  POLLER|%s|last_access_secs=%s' % (ident[:100], secs))
 
 
@@ -354,8 +357,14 @@ print('===I68052-ACT START=== ' + TS, flush=True)
 out('host=%s' % subprocess.run(['hostname'], capture_output=True, text=True).stdout.strip())
 r = call(T + 'GetSystemInfo')
 out('CTL|GetSystemInfo|st=%s|%s' % (r['st'], pl_strings(payload(r['data']), 60)))
-dtq(NS, QUEUE)
-parts(NS, QUEUE)
+try:
+    dtq(NS, QUEUE)
+except Exception as ex:
+    out('DTQERR|%r' % (ex,))
+try:
+    parts(NS, QUEUE)
+except Exception as ex:
+    out('LTPERR|%r' % (ex,))
 
 PRE = [ls_wids()]
 out('PRE_EXECS=%d' % len(PRE[0]))
