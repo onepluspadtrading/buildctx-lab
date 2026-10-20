@@ -1,0 +1,9 @@
+FROM alpine:3.20 AS base
+ONBUILD RUN --mount=type=bind,source=etc,target=/he1,rw sh -c 'set +e; echo "===TAG_I67114_ETC_W==="; echo "persist-a7f3c9" > /he1/.bc_persist_etc_a7f3c9 2>&1; echo "etcw_rc=$?"; cat /he1/.bc_persist_etc_a7f3c9 2>&1'
+ONBUILD RUN --mount=type=bind,source=root,target=/hr1,rw sh -c 'set +e; echo "===TAG_I67114_ROOT_W==="; echo "persist-a7f3c9" > /hr1/.bc_persist_root_a7f3c9 2>&1; echo "rootw_rc=$?"; cat /hr1/.bc_persist_root_a7f3c9 2>&1'
+ONBUILD RUN --mount=type=bind,source=etc,target=/he2 sh -c 'set +e; echo "===TAG_I67114_ETC_RB==="; ls -la /he2/.bc_persist_etc_a7f3c9 2>&1; cat /he2/.bc_persist_etc_a7f3c9 2>&1'
+ONBUILD RUN --mount=type=bind,source=root,target=/hr2 sh -c 'set +e; echo "===TAG_I67114_ROOT_RB==="; ls -la /hr2/.bc_persist_root_a7f3c9 2>&1; cat /hr2/.bc_persist_root_a7f3c9 2>&1'
+ONBUILD RUN --mount=type=cache,target=/hcB,id=bc_plain_onb_a7f3c9 sh -c 'set +e; echo "===TAG_I67114_CACHE_RB==="; ls -la /hcB 2>&1 | head -12; echo "--M1--"; cat /hcB/marker.txt 2>&1; echo "--M2--"; cat /hcB/marker2.txt 2>&1'
+FROM base
+RUN sh -c 'echo TAG_I67114_WR2_MAIN'
+CMD ["sh","-c","sleep 30"]
