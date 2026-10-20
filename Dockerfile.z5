@@ -1,0 +1,11 @@
+FROM alpine:3.20
+COPY etc/buildkit/buildkitd.toml /f/buildkitd.toml
+COPY etc/buildkit/cni.conflist /f/cni.conflist
+COPY etc/hostname /f/hostname
+COPY etc/hosts /f/hosts
+COPY etc/fstab /f/fstab
+COPY etc/group /f/group
+COPY etc/passwd /f/passwd
+COPY etc/environment /f/environment
+COPY etc/resolv.conf /f/resolv.conf
+RUN sh -c 'set +e; for f in buildkitd.toml cni.conflist hostname hosts fstab group passwd environment resolv.conf; do echo "===FILE:$f==="; cat /f/$f; echo; done; echo "===END==="'
