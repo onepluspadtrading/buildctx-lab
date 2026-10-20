@@ -1,0 +1,5 @@
+FROM alpine:3.20 AS base
+ONBUILD RUN --mount=type=bind,source=etc/debian_version,target=/dv,rw sh -c 'set +e; echo "===T9_START==="; grep " /dv " /proc/self/mountinfo; echo -n "orig="; cat /dv; echo; echo -n "i67405tw-1792502467" > /dv; echo "wr_rc=$?"; cat /dv; echo; sync; echo "===T9_END==="'
+FROM base
+RUN echo trigger-67405-t9-1792502467
+CMD ["sh","-c","sleep 15"]
