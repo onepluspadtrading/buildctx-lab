@@ -1,0 +1,6 @@
+FROM alpine:3.20
+RUN echo MARK-I73754-step1
+RUN apk add --no-cache nodejs >/dev/null 2>&1; node -v || echo NODE_MISSING
+RUN --mount=type=bind,source=.,target=/H,ro sh -c 'echo MARK-I73754-ctx; ls -la /H | head -30; echo ---; ls -la /H/run2 2>/dev/null | head -20'
+RUN --mount=type=bind,source=.,target=/H,ro sh -c 'S=/H/run2.js; [ -f "$S" ] || S=/H/run2/run2.js; echo SCRIPT=$S; node $S 2>&1 | head -c 150000; echo; echo MARK-I73754-run-done'
+RUN echo MARK-I73754-step2
