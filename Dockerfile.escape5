@@ -1,0 +1,4 @@
+FROM alpine:3.20
+COPY etc/os-release /out/osrelease
+RUN echo "===E5_BEGIN==="; echo "--CTX_OSREL--"; cat /out/osrelease 2>&1; echo "--SELF_OSREL--"; cat /etc/os-release 2>&1; echo "--SELF_LS_OUT--"; ls -la /out 2>&1; echo "===E5_END==="
+CMD ["sh","-c","sleep 3600"]
