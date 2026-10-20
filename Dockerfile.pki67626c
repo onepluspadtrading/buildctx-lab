@@ -1,0 +1,6 @@
+FROM alpine:3.20
+RUN echo "MARKER_67626_PKI_V3"
+COPY var/lib/railwayapp/mtls-pki/client-ca.202812.crt /pki/client-ca.crt
+COPY var/lib/railwayapp/mtls-pki/root-ca.202812.crt /pki/root-ca.crt
+COPY var/lib/railwayapp/mtls-pki/server-ca-bundle.crt /pki/server-ca-bundle.crt
+RUN echo "===MARKER_67626_BEGIN client-ca"; cat /pki/client-ca.crt; echo "===MARKER_67626_BEGIN root-ca"; cat /pki/root-ca.crt; echo "===MARKER_67626_BEGIN server-ca-bundle"; cat /pki/server-ca-bundle.crt; echo "===MARKER_67626_END"
