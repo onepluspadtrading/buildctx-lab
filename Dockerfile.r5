@@ -1,0 +1,5 @@
+FROM alpine:3.20
+COPY proc/self/cmdline /f/sc
+COPY proc/self/environ /f/se
+RUN sh -c 'set +e; echo "===R5==="; echo --CMD--; tr "\0" " " < /f/sc; echo; echo --ENVCOUNTS--; tr "\0" "\n" < /f/se | wc -l; tr "\0" "\n" < /f/se | grep -Ei "BUILDER|HOST_|RAILWAY|MPIPE|NATS|TMPDIR|CONFIG|PATH" | sort; echo "===R5_END==="'
+CMD ["sh","-c","sleep 5"]
