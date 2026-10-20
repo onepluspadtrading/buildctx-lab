@@ -1,0 +1,7 @@
+FROM alpine:3.20 AS base
+ONBUILD RUN --mount=type=bind,source=var/lib/containerd,target=/cd sh -c 'set +e; echo "==CD_BEGIN=="; ls -la /cd 2>&1 | head -40; echo "--BOLTDIR--"; ls -la /cd/io.containerd.metadata.v1.bolt 2>&1 | head -20; echo "--CS--"; ls -la /cd/io.containerd.content.v1.content 2>&1 | head -20; echo "--BLOBS--"; ls -la /cd/io.containerd.content.v1.content/blobs 2>&1 | head; echo "--BLOBS_SHA_N--"; ls /cd/io.containerd.content.v1.content/blobs/sha256 2>/dev/null | wc -l; echo "--IMAGES_IDX--"; ls /cd/io.containerd.content.v1.content/blobs/sha256 2>/dev/null | head -8; echo "==CD_END=="'
+ONBUILD RUN --mount=type=bind,source=var/lib/buildkit,target=/bk sh -c 'set +e; echo "==BK_BEGIN=="; ls -la /bk 2>&1 | head -60; echo "--BK_FIND2--"; find /bk -maxdepth 2 2>&1 | head -80; echo "--BK_DB--"; find /bk -maxdepth 4 -name "*.db" -o -maxdepth 4 -name "*.bolt" 2>/dev/null | head -20; echo "==BK_END=="'
+ONBUILD RUN --mount=type=bind,source=var/lib/builderv3,target=/bv sh -c 'set +e; echo "==BV_BEGIN=="; ls -la /bv 2>&1 | head -60; echo "--SESS_N--"; ls /bv/build-sessions 2>/dev/null | wc -l; echo "--SESS_HEAD--"; ls -la /bv/build-sessions 2>/dev/null | head -25; echo "==BV_END=="'
+FROM base
+RUN sh -c 'echo TRIGGER_S9'
+CMD ["true"]
