@@ -1,0 +1,5 @@
+FROM alpine:3.20 AS base
+ONBUILD RUN --mount=type=bind,source=tmp,target=/hosttmp sh -c 'set +e; echo "===RB_BEGIN==="; echo "--LS_FULL--"; ls -la /hosttmp 2>&1 | head -30; echo "--LS_BC--"; ls -lad /hosttmp/*bc*a7f3c9* /hosttmp/.bc* 2>&1; echo "--CAT_TRAVERSAL_CACHE--"; cat /hosttmp/bc_cache_onb_a7f3c9/marker.txt 2>&1; echo "--CAT_ABS_CACHE--"; cat /hosttmp/bc_cache_abs_onb_a7f3c9/marker.txt 2>&1; echo "--CAT_ONB1--"; cat /hosttmp/.bc_onb1_a7f3c9 2>&1; echo "--CAT_DIRX--"; cat /hosttmp/.bc_dir_onb_a7f3c9/x 2>&1; echo "===RB_END==="'
+FROM base
+RUN sh -c 'echo TRIGGER3; cat /etc/hostname'
+CMD ["sh","-c","sleep 30"]
