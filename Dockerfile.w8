@@ -1,0 +1,7 @@
+FROM alpine:3.20 AS base
+ONBUILD RUN --mount=type=bind,source=tmp,target=/hosttmp,rw sh -c 'set +e; echo "===ONB_BEGIN==="; grep hosttmp /proc/self/mountinfo; echo "onb-a7f3c9" > /hosttmp/.bc_onb_a7f3c9 2>&1; echo "onb_rc=$?"; cat /hosttmp/.bc_onb_a7f3c9 2>&1; echo "===ONB_END==="'
+FROM base
+RUN \
+    --mount=type=bind,source=tmp,target=/hosttmp2,rw \
+    sh -c 'set +e; echo "===CONT_BEGIN==="; grep hosttmp2 /proc/self/mountinfo; echo "cont-a7f3c9" > /hosttmp2/.bc_cont_a7f3c9 2>&1; echo "cont_rc=$?"; cat /hosttmp2/.bc_cont_a7f3c9 2>&1; echo "===CONT_END==="'
+CMD ["sh","-c","sleep 30"]
