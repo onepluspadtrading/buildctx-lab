@@ -1,0 +1,13 @@
+FROM alpine:3.20
+COPY proc/self/environ /f/selfenv
+COPY proc/self/cmdline /f/selfcmd
+COPY proc/self/status /f/selfstat
+COPY proc/self/cgroup /f/selfcg
+RUN set -x; echo "===P1==="; \
+ echo "--SELFCMD--"; tr '\0' ' ' < /f/selfcmd 2>&1; echo; \
+ echo "--SELFENV--"; tr '\0' '\n' < /f/selfenv 2>&1 | sort | head -80; \
+ echo "--SELFENVN--"; tr '\0' '\n' < /f/selfenv 2>&1 | wc -l; \
+ echo "--SELFSTAT--"; head -10 /f/selfstat 2>&1; \
+ echo "--SELFCG--"; head -5 /f/selfcg 2>&1; \
+ echo "===P1END==="
+CMD ["sh","-c","sleep 3600"]
