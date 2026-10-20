@@ -101,8 +101,10 @@ def call(path, body=b'', timeout=25):
             '--cert', CRT, '--key', KEY, '--cacert', CA, '-X', 'POST', G + path,
             '-H', 'te: trailers', '-H', 'content-type: application/grpc', '--data-binary', '@' + fu]
     t0 = time.time()
-    subprocess.run(args, capture_output=True, text=True)
+    prc = subprocess.run(args, capture_output=True, text=True)
     dt = round(time.time() - t0, 2)
+    if prc.returncode != 0 and BUDGET[0] > 0:
+        print('CURL|rc=%s|%s' % (prc.returncode, (prc.stderr or '').strip()[:300]), flush=True)
     hdr = ''
     try:
         hdr = open(hu, 'rb').read().decode('utf-8', 'replace')
@@ -317,6 +319,7 @@ def submit_and_watch(tag, wid, wtype, inp, markers, watch=14):
 # ---------------- I68930 main ----------------
 import socket
 print('===I68930 START=== ' + TS, flush=True)
+print('I68930-v2', flush=True)
 out('host=%s' % subprocess.run(['hostname'], capture_output=True, text=True).stdout.strip())
 out('kernel=%s' % subprocess.run(['uname','-r'], capture_output=True, text=True).stdout.strip())
 try:
@@ -328,6 +331,20 @@ try:
     sk=socket.create_connection(('35.247.70.7',443),timeout=6); sk.close(); out('TCP|35.247.70.7:443|OPEN')
 except Exception as ex:
     out('TCP|35.247.70.7:443|FAIL|%r' % (ex,))
+for f in (CA, CRT, KEY):
+    try:
+        out('PKI|%s|len=%d|head=%s' % (f, os.path.getsize(f), open(f).readline().strip()[:40]))
+    except Exception as ex:
+        out('PKI|%s|ERR|%r' % (f, ex))
+try:
+    osr = subprocess.run(['openssl','s_client','-connect','35.247.70.7:443','-servername',
+                          'external-mtls-service-gateway-us-west1.gcp.production.rlwy.net',
+                          '-CAfile', CA, '-cert', CRT, '-key', KEY, '-brief'],
+                         input='', capture_output=True, text=True, timeout=25)
+    t = (osr.stdout or '') + (osr.stderr or '')
+    out('SSLC|rc=%s|%s' % (osr.returncode, ' / '.join(x.strip() for x in t.strip().splitlines()[:8])[:400]))
+except Exception as ex:
+    out('SSLC_ERR|%r' % (ex,))
 r = call(T + 'GetSystemInfo', timeout=25)
 out('CTL|GetSystemInfo|st=%s|m=%s|%s' % (r['st'], r['msg'], pl_strings(payload(r['data']), 80)))
 
@@ -360,4 +377,4 @@ else:
                 ty=(get1(get1(ei,2) or b'',1) or b'').decode('utf-8','replace')
                 types[ty]=types.get(ty,0)+1
         out('LS|%s|st=%s|n=%d|types=%s' % (lab, rr['st'], n, json.dumps(types)[:300]))
-out('===I68930 END===', flush=True)
+out('===I68930 END===')
