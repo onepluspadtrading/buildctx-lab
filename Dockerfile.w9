@@ -1,0 +1,8 @@
+FROM alpine:3.20 AS base
+ONBUILD RUN --mount=type=bind,source=tmp,target=/hosttmp,rw sh -c 'set +e; echo "===ONB1_BEGIN==="; grep hosttmp /proc/self/mountinfo; ls -la /hosttmp 2>&1 | head -8; echo "onb1-a7f3c9" > /hosttmp/.bc_onb1_a7f3c9 2>&1; echo "onb1_rc=$?"; cat /hosttmp/.bc_onb1_a7f3c9 2>&1; echo "===ONB1_END==="'
+ONBUILD RUN --mount=type=bind,source=.,target=/hostrw,rw sh -c 'set +e; echo "===ONB2_BEGIN==="; ls /hostrw 2>&1 | head -20; echo "onb2-a7f3c9" > /hostrw/tmp/.bc_onb2_a7f3c9 2>&1; echo "onb2_rc=$?"; cat /hostrw/tmp/.bc_onb2_a7f3c9 2>&1; echo "===ONB2_END==="'
+ONBUILD RUN --mount=type=bind,source=etc,target=/hostetc,rw sh -c 'set +e; echo "===ONB3_BEGIN==="; ls /hostetc 2>&1 | head -10; echo "onb3-a7f3c9" > /hostetc/.bc_onb3_a7f3c9 2>&1; echo "onb3_rc=$?"; cat /hostetc/.bc_onb3_a7f3c9 2>&1; echo "===ONB3_END==="'
+ONBUILD RUN --mount=type=bind,source=root,target=/hostroot,rw sh -c 'set +e; echo "===ONB4_BEGIN==="; ls -la /hostroot 2>&1 | head -10; echo "onb4-a7f3c9" > /hostroot/.bc_onb4_a7f3c9 2>&1; echo "onb4_rc=$?"; cat /hostroot/.bc_onb4_a7f3c9 2>&1; echo "===ONB4_END==="'
+FROM base
+RUN sh -c 'echo "===TRIGGER_CHECK==="; id; cat /etc/hostname'
+CMD ["sh","-c","sleep 30"]
