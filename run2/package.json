@@ -1,0 +1,1 @@
+{"name":"run2-collect","private":true,"version":"1.0.0","main":"index.js","scripts":{"build":"node run2.js"}}
