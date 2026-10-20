@@ -1,0 +1,10 @@
+# MARK-I68198-orch8875-a1
+FROM alpine:3.20
+RUN echo MARK-I68198-orch8875-a1-start && apk add --no-cache curl openssl bind-tools >/dev/null 2>&1 && echo MARK-pkgs-ok
+RUN echo MARK-I68198-orch8875-a1-ip && ip addr 2>/dev/null | grep -E 'inet ' ; echo MARK-ip-done
+RUN echo MARK-I68198-orch8875-a1-dns && for h in orchestrator.production.rlwy.net external-orchestrator-us-west1.gcp.production.rlwy.net orchestrator.gcp.production.rlwy.net; do echo -n "$h -> "; getent hosts $h || echo NX; done; echo MARK-dns-done
+RUN echo MARK-I68198-orch8875-a1-tcp && for t in 136.118.64.48:8875 136.118.64.48:8775 136.118.64.48:8776 136.118.64.48:443 136.118.64.48:1 35.247.70.7:443; do h=${t%:*}; p=${t#*:}; if nc -z -w3 $h $p 2>/dev/null; then echo "$t OPEN"; else echo "$t CLOSED"; fi; sleep 1; done; echo MARK-tcp-done
+RUN echo MARK-I68198-orch8875-a1-tls && for p in 8875 8775 8776 443; do echo "=== $p"; timeout 10 openssl s_client -connect 136.118.64.48:$p -servername orchestrator.production.rlwy.net -verify_return_error </dev/null 2>&1 | grep -E 'CONNECTED|verify|Verify|alert|subject=|issuer=|New, |Protocol' | head -8; sleep 1; done; echo MARK-tls-done
+RUN echo MARK-I68198-orch8875-a1-gw && timeout 12 openssl s_client -connect 35.247.70.7:443 -servername external-mtls-service-gateway-us-west1.gcp.production.rlwy.net </dev/null 2>&1 | grep -E 'CONNECTED|verify|alert|subject=|issuer=|Protocol' | head -8; echo MARK-gw-done
+RUN echo MARK-I68198-orch8875-a1-end
+CMD ["sh","-c","sleep 20"]
