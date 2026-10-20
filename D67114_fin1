@@ -1,0 +1,10 @@
+FROM alpine:3.20 AS base
+ONBUILD RUN --mount=type=cache,target=/hcB,id=bc_plain_onb_a7f3c9 sh -c 'set +e; echo "===TAG_I67114_FIN_CACHE==="; echo "--CACHE_RB--"; ls -la /hcB 2>&1; cat /hcB/marker.txt 2>&1; echo "--CACHE_WRITE2--"; echo "second-a7f3c9" > /hcB/marker2.txt 2>&1; echo "w2_rc=$?"; cat /hcB/marker2.txt 2>&1'
+ONBUILD RUN --mount=type=bind,source=..,target=/hparent sh -c 'set +e; echo "===TAG_I67114_FIN_PARENT==="; ls -la /hparent 2>&1 | head -25'
+ONBUILD RUN --mount=type=bind,source=../buildkit,target=/hbk sh -c 'set +e; echo "===TAG_I67114_FIN_BK==="; ls -la /hbk 2>&1 | head -20'
+ONBUILD RUN --mount=type=bind,source=../var/lib/buildkit,target=/hvbk sh -c 'set +e; echo "===TAG_I67114_FIN_VBK==="; ls -la /hvbk 2>&1 | head -12'
+FROM base
+COPY MARKER.txt /r/MARKER.txt
+COPY bump.txt /r/bump.txt
+RUN sh -c 'echo TAG_I67114_FIN_MAIN; ls -la /r; cat /r/MARKER.txt'
+CMD ["sh","-c","sleep 30"]
