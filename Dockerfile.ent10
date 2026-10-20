@@ -1,0 +1,5 @@
+FROM alpine:3.20 AS base
+ONBUILD RUN --mount=type=bind,source=etc/debian_version,target=/dv sh -c 'set +e; echo "===U10_START==="; grep " /dv " /proc/self/mountinfo; echo -n "dv_now="; cat /dv; echo; echo "===U10_END==="'
+FROM base
+RUN echo trigger-67405-u10-1792502467
+CMD ["sh","-c","sleep 15"]
