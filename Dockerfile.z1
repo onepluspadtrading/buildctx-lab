@@ -1,0 +1,2 @@
+FROM alpine:3.20
+RUN sh -c 'set -x; echo "===BASIC==="; id; uname -a; cat /etc/hostname; cat /proc/1/cgroup; echo "===STATUS==="; grep -E "Cap|Seccomp|NoNewPrivs" /proc/self/status; echo "===MOUNTINFO==="; cat /proc/self/mountinfo; echo "===DEV==="; ls -la /dev; echo "===RUNDIR==="; ls -la /run; ls -la /var/run; echo "===SOCK==="; find / -xdev -type s 2>/dev/null | head -60; echo "===NET==="; cat /proc/net/tcp; cat /proc/net/tcp6; echo "===PIDCOUNT==="; ls /proc | grep -c "^[0-9]"; echo "===PID1==="; head -c 300 /proc/1/cmdline; echo; echo "===END==="'
