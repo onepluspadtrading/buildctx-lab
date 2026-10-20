@@ -231,7 +231,7 @@ if rl['data']:
                 pass
 print('NS_FOUND=' + ','.join(names[:20]), flush=True)
 cand = []
-for n in names + ['default', 'production', 'railway', 'railway-production', 'prod']:
+for n in ['storage_production_oyq1d'] + names + ['default', 'production', 'railway', 'railway-production', 'prod']:
     if n and n not in cand:
         cand.append(n)
 for ns in cand[:8]:
@@ -239,7 +239,7 @@ for ns in cand[:8]:
 
 print('===C LIST WORKFLOWS===', flush=True)
 execs = []  # (ns, wid, rid, wtype, dump)
-for ns in (cand[:4] or ['default']):
+for ns in (cand[:5] or ['default']):
     for q in ['ExecutionTime > "2026-10-19T13:00:00Z"', '']:
         req = fs(1, ns) + fv(2, 5) + (fs(4, q) if q else b'')
         r = grpc_call(T + 'ListWorkflowExecutions', req, timeout=20)
@@ -271,7 +271,7 @@ for ns in (cand[:4] or ['default']):
 # task queue probes
 print('===C2 TASK QUEUES===', flush=True)
 for ns in (cand[:3] or ['default']):
-    for tq in ['builder', 'production-builderv3', 'builder/us-west1', 'production-builderv3-us-west1']:
+    for tq in ['builder', 'production-builderv3', 'storage', 'rbd']:
         req = fs(1, ns) + fmsg(2, fs(1, tq)) + fv(3, 1) + fv(4, 1)
         r = grpc_call(T + 'DescribeTaskQueue', req, timeout=15)
         show('T_DescribeTQ[%s][%s]' % (ns, tq), r, lim=300)
@@ -279,7 +279,7 @@ for ns in (cand[:3] or ['default']):
             break
 
 print('===D HISTORY===', flush=True)
-sel = [e for e in execs if re.search(r'(?i)build|deploy|orchestr|stack|release', e[3])][:3]
+sel = [e for e in execs if re.search(r'(?i)rbd|storage|ceph', e[3])][:3] or [e for e in execs if re.search(r'(?i)build|deploy|orchestr|stack|release|rbd|storage|ceph', e[3])][:3]
 if not sel:
     sel = execs[:2]
 for ns, wid, rid, ty in sel:
