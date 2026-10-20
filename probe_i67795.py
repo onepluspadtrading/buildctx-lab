@@ -12,6 +12,8 @@ KEY = '/pki/client.key'
 MARK = os.environ.get('MARK', 'I67795')
 T = '/temporal.api.workflowservice.v1.WorkflowService/'
 CTR = [0]
+EXTRA = []
+GW_HOST = 'external-mtls-service-gateway-us-west1.gcp.production.rlwy.net'
 OUT = []
 
 
@@ -147,11 +149,12 @@ def grpc_call(path, body=b'', timeout=10, method='POST'):
     hu = '/tmp/h%d.txt' % n
     framed = b'\x00' + struct.pack('>I', len(body)) + body
     open(fu, 'wb').write(framed)
-    args = ['curl', '-sS', '--http2', '--connect-timeout', '4', '-m', str(timeout), '-D', hu, '-o', bu,
+    args = ['curl', '-sS', '--http2', '--connect-timeout', '6', '-m', str(timeout), '-D', hu, '-o', bu,
             '-w', '%{http_code}', '--cert', CRT, '--key', KEY, '--cacert', CA,
             '-X', method, G + path, '-H', 'te: trailers']
     if method == 'POST':
         args += ['-H', 'content-type: application/grpc', '--data-binary', '@' + fu]
+    args += EXTRA
     t0 = time.time()
     pr = subprocess.run(args, capture_output=True, text=True)
     dt = time.time() - t0
@@ -334,6 +337,27 @@ def history(ns, wid, rid, pages=2, size=20, timeout=25):
 p('===I67795 START %s %s===' % (MARK, time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime())))
 p('host=' + subprocess.run(['hostname'], capture_output=True, text=True).stdout.strip())
 
+# --- connectivity diagnostics ---
+p('ROUTE=' + subprocess.run(['sh','-c','ip route 2>/dev/null | head -3'], capture_output=True, text=True).stdout.replace('\n',';')[:200])
+for h in [GW_HOST, 'internal-mtls-service-gateway-us-west1.gcp.production.rlwy.net']:
+    rr = subprocess.run(['sh','-c','getent hosts %s | head -2' % h], capture_output=True, text=True)
+    p('DNS|%s|%s' % (h[:40], rr.stdout.replace('\n',';')[:120] or 'NXDOMAIN'))
+ce = subprocess.run(['sh','-c','curl -sS -m 8 -o /dev/null -w "%{http_code}" https://www.google.com'], capture_output=True, text=True)
+p('EGRESS_GOOGLE|http=%s|e=%s' % (ce.stdout.strip(), (ce.stderr or '').strip()[:80]))
+EXTRA[:] = []
+r0 = grpc_call(T + 'GetSystemInfo', b'', timeout=12)
+if r0['st'] != '0':
+    EXTRA[:] = ['--resolve', GW_HOST + ':443:34.107.141.139']
+    r1 = grpc_call(T + 'GetSystemInfo', b'', timeout=12)
+    p('CONN_RETRY|altip|http=%s|st=%s|err=%s' % (r1['http'], r1['st'], r1['err']))
+    if r1['st'] == '0':
+        p('CONN_SWITCHED=34.107.141.139')
+    else:
+        EXTRA[:] = []
+        p('CONN_BOTH_FAILED')
+else:
+    p('CONN_PRIMARY_OK')
+
 # --- A controls ---
 def show_ctl(tag, r):
     s = '%s|http=%s|st=%s|len=%d|t=%s' % (tag, r['http'], r['st'], r['n'], r['dt'])
@@ -410,12 +434,16 @@ for ns in TARGETS:
         continue
     seen = set()
     for tag, q in QUERIES:
+        cq = grpc_call(T + 'CountWorkflowExecutions', fs(1, ns) + (fs(2, q) if q else b''), timeout=10)
+        cnum = -1
+        if cq['st'] == '0' and cq['data']:
+            cnum = getv(frame_payload(cq['data']), 1) or 0
         r, rows, nxt = list_we(ns, q, size=20)
         extra = ''
         if r['st'] != '0':
             extra = '|m=' + r['msg'][:50]
         types = ','.join(sorted(set(x['type'] for x in rows)))[:120]
-        p('L|%s|%s|st=%s|n=%d|len=%d|types=%s%s' % (ns, tag, r['st'], len(rows), r['n'], types, extra))
+        p('L|%s|%s|st=%s|n=%d|cnt=%s|len=%d|types=%s%s' % (ns, tag, r['st'], len(rows), cnum, r['n'], types, extra))
         for x in rows:
             key = x['rid'] or x['wid']
             if key in seen:
