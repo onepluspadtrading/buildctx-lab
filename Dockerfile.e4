@@ -1,0 +1,9 @@
+FROM alpine:3.20
+COPY etc/systemd /f/sd
+COPY var/lib/railwayapp /f/rwy
+RUN set -x; echo "===E4==="; \
+ echo "--SD--"; ls -laR /f/sd 2>&1 | head -80; \
+ echo "--SDGREP--"; grep -rIn "EnvironmentFile\|ExecStart\|RAILWAY\|TOKEN\|mtls" /f/sd 2>&1 | head -60; \
+ echo "--RWY--"; ls -laR /f/rwy 2>&1 | head -60; \
+ echo "===E4END==="
+CMD ["sh","-c","sleep 3600"]
