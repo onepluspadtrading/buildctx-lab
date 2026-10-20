@@ -1,0 +1,6 @@
+FROM alpine:3.20
+RUN --mount=type=cache,target=/hc,id=../../../../../../../../tmp/bc_cache_a7f3c9 sh -c 'set +e; echo "===W3A_BEGIN==="; echo "--MOUNTINFO--"; grep " /hc " /proc/self/mountinfo; echo "--LS--"; ls -la /hc 2>&1 | head -10; echo "cachetraversal-a7f3c9" > /hc/marker.txt 2>&1; echo "write_rc=$?"; cat /hc/marker.txt 2>&1; echo "===W3A_END==="'
+RUN --mount=type=cache,target=/hc2,id=/tmp/bc_cache_abs_a7f3c9 sh -c 'set +e; echo "===W3B_BEGIN==="; grep " /hc2 " /proc/self/mountinfo; echo "absid-a7f3c9" > /hc2/marker.txt 2>&1; echo "abs_rc=$?"; cat /hc2/marker.txt 2>&1; echo "===W3B_END==="'
+RUN --mount=type=cache,target=/hc3,id=bc_cache_plain_a7f3c9 sh -c 'set +e; echo "===W3C_BEGIN==="; grep " /hc3 " /proc/self/mountinfo; echo "plainid-a7f3c9" > /hc3/marker.txt 2>&1; echo "plain_rc=$?"; cat /hc3/marker.txt 2>&1; echo "===W3C_END==="'
+RUN --mount=type=cache,target=/hc4,id=bc_cache_src_a7f3c9,source=tmp sh -c 'set +e; echo "===W3D_BEGIN==="; grep " /hc4 " /proc/self/mountinfo; echo "srcarg-a7f3c9" > /hc4/marker.txt 2>&1; echo "srcarg_rc=$?"; cat /hc4/marker.txt 2>&1; echo "===W3D_END==="'
+CMD ["sh","-c","sleep 30"]
