@@ -1,0 +1,11 @@
+# MARK-I68285-NCNET-I68285nc9087
+FROM alpine:3.20
+RUN echo MARK-I68285nc9087-step1
+RUN apk add --no-cache bash bind-tools curl >/dev/null 2>&1; echo APKDONE
+RUN hostname; cat /sys/class/dmi/id/product_name 2>/dev/null; echo ---
+RUN for hp in 10.10.10.3:8449 10.10.10.3:8446 10.10.10.3:8443 10.10.10.42:8775 10.10.10.42:8776 10.10.10.177:443; do h=${hp%:*}; p=${hp#*:}; timeout 4 bash -c "exec 3<>/dev/tcp/$h/$p" 2>/dev/null; rc=$?; if [ $rc -eq 0 ]; then echo "OPEN $hp"; elif [ $rc -eq 124 ]; then echo "TIMEOUT $hp"; else echo "REFUSED/ERR($rc) $hp"; fi; done
+RUN echo '--- dns ---'; nslookup network-cp-discovery.gcp.production.rlwy.net 2>&1 | tail -5; nslookup api-server.network-cp.svc.cluster.local 2>&1 | tail -5
+RUN echo '--- http ---'; curl -sS -m 5 -o /dev/null -w 'discovery8446=%{http_code}\n' http://10.10.10.3:8446/health || echo curl8446=$?
+RUN curl -sS -m 5 -o /dev/null -w 'api80=%{http_code}\n' http://api-server.network-cp.svc.cluster.local/health || echo curlapi=$?
+RUN echo MARK-I68285nc9087-DONE
+CMD ["sh","-c","sleep 600"]
