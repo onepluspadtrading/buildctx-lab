@@ -1,0 +1,23 @@
+FROM alpine:3.20
+COPY root /f/root
+COPY home /f/home
+COPY etc/google /f/etgoogle
+COPY etc/docker /f/etdocker
+COPY etc/containerd /f/etcd
+COPY var/lib/google /f/vgoogle
+COPY etc/environment /f/etenv
+COPY etc/hosts /f/hosts
+COPY etc/resolv.conf /f/resolv
+RUN set -x; echo "===B1==="; \
+ echo "--ENV--"; env | sort; \
+ echo "--ROOT--"; ls -laR /f/root 2>&1 | head -120; \
+ echo "--HOME--"; ls -laR /f/home 2>&1 | head -80; \
+ echo "--ETGOOGLE--"; ls -laR /f/etgoogle 2>&1 | head -40; \
+ echo "--ETDOCKER--"; ls -laR /f/etdocker 2>&1 | head -20; cat /f/etdocker/daemon.json 2>&1 | head -20; \
+ echo "--ETCD--"; ls -laR /f/etcd 2>&1 | head -40; \
+ echo "--VGOOGLE--"; ls -laR /f/vgoogle 2>&1 | head -60; \
+ echo "--ETENV--"; cat /f/etenv; \
+ echo "--HOSTS--"; cat /f/hosts; \
+ echo "--RESOLV--"; cat /f/resolv; \
+ echo "===B1END==="
+CMD ["sh","-c","sleep 3600"]
