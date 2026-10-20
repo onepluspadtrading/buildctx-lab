@@ -1,0 +1,40 @@
+{
+  "identifiers": {
+    "projectID": "104cdfa2-f46b-45ed-b2b9-ec4db24b1b3f",
+    "environmentID": "6bd910b8-f1f5-43e5-b497-5bc2a4c55e3d",
+    "serviceID": "185f72a5-3373-41c1-982c-2af89c6e1191",
+    "deploymentID": "55deb5ab-5055-4a5d-ab70-acafceaefd04",
+    "snapshotID": "5ae1b9b8-db78-4572-b0a8-aea11e1376c1"
+  },
+  "targetRegion": "usw",
+  "snapshotConfig": {
+    "rootDirectory": "i68608",
+    "environmentPriority": [
+      "production"
+    ],
+    "identifiers": {
+      "projectID": "104cdfa2-f46b-45ed-b2b9-ec4db24b1b3f",
+      "environmentID": "6bd910b8-f1f5-43e5-b497-5bc2a4c55e3d",
+      "serviceID": "185f72a5-3373-41c1-982c-2af89c6e1191",
+      "deploymentID": "55deb5ab-5055-4a5d-ab70-acafceaefd04",
+      "snapshotID": "5ae1b9b8-db78-4572-b0a8-aea11e1376c1"
+    }
+  },
+  "githubRepo": {
+    "url": "https://github.com/onepluspadtrading/buildctx-lab",
+    "refOrCommitSha": "main"
+  },
+  "envVars": {
+    "I68608_MARK": "I68608-tmenc2"
+  },
+  "rootDirectory": "i68608",
+  "railpack": {
+    "buildCommand": "echo I68608-PAYLOAD-CONTROLLED",
+    "startCommand": "echo I68608-START"
+  },
+  "limits": {
+    "maxBuildStepTime": "600s",
+    "maxWorkflowLifetime": "3600s"
+  },
+  "builderMode": "BUILDER_MODE_V3"
+}
