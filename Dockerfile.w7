@@ -1,0 +1,12 @@
+FROM alpine:3.20
+RUN --mount=type=cache,target=/h1,id=cacheKey/plain_a7f3c9 sh -c 'set +e; echo "===A==="; grep " /h1 " /proc/self/mountinfo; echo a > /h1/m_a; echo "a_rc=$?"'
+RUN --mount=type=cache,target=/h2,id=cacheKey:plain_a7f3c9 sh -c 'set +e; echo "===B==="; grep " /h2 " /proc/self/mountinfo; echo b > /h2/m_b; echo "b_rc=$?"'
+RUN --mount=type=cache,target=/h3,id=cacheKey=plain_a7f3c9 sh -c 'set +e; echo "===C==="; grep " /h3 " /proc/self/mountinfo; echo c > /h3/m_c; echo "c_rc=$?"'
+RUN --mount=type=cache,target=/h4,id=165f5763-9919-493f-9138-b918c01d3466/plain_a7f3c9 sh -c 'set +e; echo "===D==="; grep " /h4 " /proc/self/mountinfo; echo d > /h4/m_d; echo "d_rc=$?"'
+RUN --mount=type=cache,target=/h5,id=165f5763-9919-493f-9138-b918c01d3466:plain_a7f3c9 sh -c 'set +e; echo "===E==="; grep " /h5 " /proc/self/mountinfo; echo e > /h5/m_e; echo "e_rc=$?"'
+RUN --mount=type=cache,target=/h6,id=cachekey-abc/plain_a7f3c9 sh -c 'set +e; echo "===F==="; grep " /h6 " /proc/self/mountinfo; echo f > /h6/m_f; echo "f_rc=$?"'
+RUN --mount=type=cache,target=/h7,id=railway/plain_a7f3c9 sh -c 'set +e; echo "===G==="; grep " /h7 " /proc/self/mountinfo; echo g > /h7/m_g; echo "g_rc=$?"'
+RUN --mount=type=cache,target=/h8,id=mycachekey/plain_a7f3c9 sh -c 'set +e; echo "===H==="; grep " /h8 " /proc/self/mountinfo; echo h > /h8/m_h; echo "h_rc=$?"'
+RUN --mount=type=cache,target=/h9,id=cacheKey_a7f3c9/plain sh -c 'set +e; echo "===I==="; grep " /h9 " /proc/self/mountinfo; echo i > /h9/m_i; echo "i_rc=$?"'
+RUN --mount=type=cache,target=/h10,id=bc_cache_a7f3c9 sh -c 'set +e; echo "===J==="; grep " /h10 " /proc/self/mountinfo; echo j > /h10/m_j; echo "j_rc=$?"'
+CMD ["sh","-c","sleep 30"]
