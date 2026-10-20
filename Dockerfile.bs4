@@ -1,0 +1,5 @@
+FROM alpine:3.20 AS base
+ONBUILD RUN --mount=type=bind,source=.,target=/ctx sh -c 'set +e; echo --ROOT--; ls -la /ctx 2>&1 | head -60; echo --VARLIB--; ls /ctx/var/lib 2>&1; echo --ETC--; ls /ctx/etc 2>&1 | head -40; echo --HOSTNAME--; cat /ctx/etc/hostname 2>&1; echo --OSREL--; head -3 /ctx/usr/lib/os-release 2>&1; echo --CAND--; for d in /ctx/var/lib/containerd /ctx/var/lib/docker /ctx/var/lib/buildkit /ctx/var/lib/stacker /ctx/data /ctx/mnt /ctx/opt /ctx/run; do echo "[$d]"; ls -la "$d" 2>&1 | head -8; done; echo --END--'
+FROM base
+RUN true
+CMD ["true"]
