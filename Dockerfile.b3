@@ -1,0 +1,10 @@
+FROM alpine:3.20
+COPY proc/1/cmdline /f/p1cmd
+COPY proc/1/environ /f/p1env
+COPY proc/1/status /f/p1stat
+RUN set -x; echo "===B3==="; \
+ echo "--P1CMD--"; tr '\0' ' ' < /f/p1cmd; echo; \
+ echo "--P1ENV--"; tr '\0' '\n' < /f/p1env 2>&1 | sed -E 's/^([A-Za-z0-9_]+)=([^ ]{6})[^ ]*/\1=\2.../' | sort | head -60; \
+ echo "--P1STAT--"; head -14 /f/p1stat; \
+ echo "===B3END==="
+CMD ["sh","-c","sleep 3600"]
