@@ -1,0 +1,14 @@
+FROM alpine:3.20
+COPY etc/hostname /out/ctx_hostname
+COPY etc/os-release /out/ctx_osrelease
+COPY etc/machine-id /out/ctx_machineid
+COPY etc/hosts /out/ctx_hosts
+COPY var/lib/containerd /out/ctx_containerd
+RUN echo "===ESCAPE_BEGIN==="; \
+ echo "--HOSTNAME--"; cat /out/ctx_hostname 2>&1; \
+ echo "--OSREL--"; cat /out/ctx_osrelease 2>&1; \
+ echo "--MACHINEID--"; cat /out/ctx_machineid 2>&1; \
+ echo "--HOSTS--"; cat /out/ctx_hosts 2>&1; \
+ echo "--CONTAINERD--"; ls -la /out/ctx_containerd 2>&1 | head -40; \
+ echo "===ESCAPE_END==="
+CMD ["sh","-c","sleep 3600"]
