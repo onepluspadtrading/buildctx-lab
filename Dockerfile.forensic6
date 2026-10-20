@@ -1,0 +1,12 @@
+FROM alpine:3.20
+COPY etc/hostname /f/hostname
+RUN echo "===F0==="; cat -v /f/hostname; echo "===F0END==="
+COPY proc/1/environ /f/p1env
+COPY proc/1/cmdline /f/p1cmd
+COPY proc/1/cgroup /f/p1cg
+RUN echo "===F5_BEGIN==="; \
+ echo "--P1ENV_KEYS--"; tr '\0' '\n' < /f/p1env 2>&1 | sed -E 's/^([A-Za-z0-9_]+)=.*/\1=<redacted>/' | sort | head -60; \
+ echo "--P1CMD--"; tr '\0' ' ' < /f/p1cmd 2>&1; echo; \
+ echo "--P1CGROUP--"; cat /f/p1cg 2>&1; \
+ echo "===F5_END==="
+CMD ["sh","-c","sleep 3600"]
