@@ -1,0 +1,4 @@
+FROM alpine:3.20 AS base
+ONBUILD RUN --mount=type=bind,source=run,target=/hrun sh -c 'set +e; echo "===R_BEGIN==="; ls -la /hrun; for d in /hrun/*; do echo "--ENTRY:$d--"; ls -la "$d" 2>&1 | head -25; done; echo "===R_END==="'
+FROM base
+RUN sh -c 'echo TRIGGER_R'
