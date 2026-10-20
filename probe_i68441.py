@@ -205,6 +205,36 @@ def start_body(wid, wtype, tq, inp, etime=120, rtime=120, wtime=10):
 LASTTOK = [b'']
 
 
+def patch_payload(o, msg):
+    """parse 'Go struct field <Struct>.<path> of type <T>' and coerce leaf to T's zero value."""
+    m = re.search(r'Go struct field ([A-Za-z0-9_.]+) of type ([A-Za-z0-9_.\[\]\*]+)', msg or '')
+    if not m:
+        return None
+    parts = m.group(1).split('.')[1:]
+    typ = m.group(2)
+    if not parts:
+        return None
+    cur = o
+    for k in parts[:-1]:
+        if isinstance(cur, dict) and k in cur and isinstance(cur[k], dict):
+            cur = cur[k]
+        else:
+            return None
+    if not isinstance(cur, dict):
+        return None
+    leaf = parts[-1]
+    if 'Duration' in typ: v = {'seconds': 0}
+    elif 'int' in typ.lower() or 'float' in typ.lower(): v = 0
+    elif 'bool' in typ: v = False
+    elif 'string' in typ: v = ''
+    elif typ.startswith('[]') or 'slice' in typ: v = []
+    else: v = {}
+    if leaf in cur and type(cur[leaf]) is type(v):
+        return None
+    cur[leaf] = v
+    return '%s => %s' % ('.'.join(parts), json.dumps(v))
+
+
 def list_execs(n=100, tok=b'', query=''):
     req = fs(1, NS) + fv(2, n)
     if tok: req += fmsg(3, tok)
@@ -380,72 +410,77 @@ def main():
     except Exception as ex:
         out('SELFCHECK|st=FAIL|%r' % (ex,))
 
-    # ---------- PHASE C: ONE real delivery, poll, terminate on activity ----------
-    out('=== DELIVER %s ===' % wid)
-    r = call(T + 'StartWorkflowExecution', body, timeout=30)
-    out('START|st=%s|m=%s|len=%d' % (r['st'], r['msg'], r['n']))
-    rid = ''
-    if r['st'] == '0':
-        try:
-            rid = (g1(payload(r['data']), 1) or b'').decode()
-        except Exception:
-            rid = ''
-    out('RUNID|%s' % rid)
-    if not rid:
-        out('DELIVER_FAILED_BEFORE_RUN'); out('===I68441 END==='); return
+    # ---------- PHASE C: real delivery (<=2 in this run), poll, terminate on activity ----------
+    def deliver_and_watch(inp, tag, win=120):
+        wid = 'i68441-%s-%s' % (tag, TS)
+        body = start_body(wid, 'ScheduleSnapshotAndBuild', QUEUE, inp)
+        out('=== DELIVER %s ===' % wid)
+        r = call(T + 'StartWorkflowExecution', body, timeout=30)
+        out('START|%s|st=%s|m=%s|len=%d' % (tag, r['st'], r['msg'], r['n']))
+        rid = ''
+        if r['st'] == '0':
+            try: rid = (g1(payload(r['data']), 1) or b'').decode()
+            except Exception: rid = ''
+        out('RUNID|%s|%s' % (tag, rid))
+        if not rid:
+            return {'hit': False, 'fail': 'start_failed:' + r['msg'], 'evs': [], 'wid': wid, 'rid': ''}
+        t0 = time.time(); last = None; hit = False; done = False; evs = []
+        while time.time() - t0 < win:
+            rr = hist_page(wid, rid, 60)
+            if rr['st'] != '0':
+                time.sleep(5); continue
+            evs, _ = events_of(rr)
+            s = [ev_type(e) for e in evs]
+            if s != last:
+                last = list(s)
+                out('EV|%s|t=%.1f|%s' % (tag, time.time() - t0, ','.join(ET.get(x, str(x)) for x in s)))
+                if 10 in s:
+                    for e in evs:
+                        if ev_type(e) == 10:
+                            at = g1(e, 15) or g1(e, 10) or b''
+                            out('ACT|%s|type=%s|tq=%s' % (tag, txt(g1(at, 2) or b'', 80), txt(g1(at, 3) or b'', 80)))
+                            ain = g1(at, 5) or g1(at, 4)
+                            if ain:
+                                for p in all_of(ain, 1):
+                                    mm, dd = decode_payload(p)
+                                    out('ACTMETA|%s' % json.dumps(mm)[:200])
+                                    out('ACTIN|' + dd.decode('utf-8', 'replace')[:2000])
+                            break
+                    hit = True
+                if 3 in s or 2 in s or 24 in s:
+                    done = True
+            if hit or done:
+                break
+            time.sleep(5)
+        fail = ''
+        for e in evs:
+            t = ev_type(e)
+            if t == 3:
+                fa = g1(e, 8) or g1(e, 7) or b''
+                fl = g1(fa, 1) or b''
+                fail = fl.decode('utf-8', 'replace')
+                out('FAILURE|%s|' % tag + txt(fl, 700))
+            elif t in (9, 14, 19):
+                out('EVFAIL%d|%s|' % (t, tag) + txt(e, 600))
+                if not fail: fail = txt(e, 600)
+        terminate(wid, rid, 'i68441 self cleanup')
+        return {'hit': hit, 'fail': fail, 'evs': evs, 'wid': wid, 'rid': rid}
 
-    t0 = time.time(); last = None; hit_act = False; done = False
-    while time.time() - t0 < 300:
-        rr = hist_page(wid, rid, 60)
-        if rr['st'] != '0':
-            time.sleep(5); continue
-        evs, _ = events_of(rr)
-        s = [ev_type(e) for e in evs]
-        if s != last:
-            last = list(s)
-            out('EV|t=%.1f|%s' % (time.time() - t0, ','.join(ET.get(x, str(x)) for x in s)))
-            # dump activity scheduled attributes once
-            if 10 in s:
-                for e in evs:
-                    if ev_type(e) == 10:
-                        at = g1(e, 15) or g1(e, 10) or b''
-                        out('ACT|type=%s|tq=%s' % (txt(g1(at, 2) or b'', 80), txt(g1(at, 3) or b'', 80)))
-                        ain = g1(at, 5) or g1(at, 4)
-                        if ain:
-                            for p in all_of(ain, 1):
-                                mm, dd = decode_payload(p)
-                                out('ACTMETA|%s' % json.dumps(mm)[:200])
-                                out('ACTIN|' + dd.decode('utf-8', 'replace')[:1500])
-                        break
-                hit_act = True
-            if 3 in s or 2 in s or 24 in s:
-                done = True
-        if hit_act:
-            out('ACTIVITY_SCHEDULED => decoding correct, function executed')
-            break
-        if done:
-            break
-        time.sleep(5)
-
-    if not hit_act:
-        # capture failure text / tail
-        try:
-            for e in evs:
-                t = ev_type(e)
-                if t == 3:
-                    fa = g1(e, 8) or g1(e, 7) or b''
-                    fl = g1(fa, 1) or b''
-                    out('FAILURE|' + txt(fl, 600))
-                    out('FAILURE_RAW|' + fl.hex()[:600])
-                elif t in (9, 14, 19):
-                    out('EVFAIL%d|' % t + txt(e, 700))
-        except Exception as ex:
-            out('FAILDUMP_ERR|%r' % (ex,))
-    # terminate our own execution immediately (always)
-    terminate(wid, rid, 'i68441 self cleanup')
-    time.sleep(1)
-    s2 = ev_seq(wid, rid)
-    out('POSTTERM|' + ','.join(ET.get(x, str(x)) for x in (s2 or [])))
+    A = deliver_and_watch(inp, 'A', 120)
+    hit_act = A['hit']; last_res = A
+    if not hit_act and 'unable to decode' in (A['fail'] or ''):
+        inp2 = copy.deepcopy(inp)
+        fx = patch_payload(inp2, A['fail'])
+        out('PATCHED|%s' % fx)
+        if fx:
+            out('PATCH_TREE:\n' + tree(inp2))
+            B = deliver_and_watch(inp2, 'B', 150)
+            hit_act = B['hit']; last_res = B
+    try:
+        s2 = ev_seq(last_res['wid'], last_res['rid'])
+        out('POSTTERM|' + ','.join(ET.get(x, str(x)) for x in (s2 or [])))
+    except Exception as ex:
+        out('POSTTERM_ERR|%r' % (ex,))
     out('===I68441 END=== mark=%s hit_act=%s' % (MARK, hit_act))
 
 
