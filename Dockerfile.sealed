@@ -1,0 +1,5 @@
+FROM alpine:3.20
+ARG SEALED_CANARY
+RUN echo "CANARY_ARG_BEGIN[${SEALED_CANARY}]CANARY_ARG_END"
+RUN --mount=type=secret,id=SEALED_CANARY sh -c 'cat /run/secrets/SEALED_CANARY; echo; echo CANARY_MOUNT_DONE'
+RUN echo SEALEDTX_DONE_3dda6b67
